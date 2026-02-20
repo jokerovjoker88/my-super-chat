@@ -28,7 +28,10 @@ function openChat(name) {
 
 socket.on('new_msg', data => {
     if(data.from === activeChat || data.to === activeChat) {
-        render(data.sender || data.from, data.text, data.file, data.fileName, data.time);
+        render(data.from, data.text, data.file, data.fileName, data.time, data.id, data.is_read);
+        if(data.from !== myNick && activeChat === data.from) {
+            socket.emit('load_chat', { me: myNick, him: activeChat });
+        }
     } else if(data.from !== myNick) {
         sound.play().catch(()=>{});
     }
@@ -38,8 +41,18 @@ socket.on('new_msg', data => {
 socket.on('chat_history', msgs => {
     const box = document.getElementById('messages');
     box.innerHTML = '';
-    msgs.forEach(m => render(m.sender, m.content, m.file_data, m.file_name, m.time));
+    msgs.forEach(m => render(m.sender, m.content, m.file_data, m.file_name, m.time, m.id, m.is_read));
     box.scrollTop = box.scrollHeight;
+});
+
+socket.on('messages_read_by_partner', ({ partner }) => {
+    if (activeChat === partner) {
+        const ticks = document.querySelectorAll('.me .status-tick');
+        ticks.forEach(t => {
+            t.classList.remove('fa-check');
+            t.classList.add('fa-check-double');
+        });
+    }
 });
 
 async function send() {
@@ -52,13 +65,21 @@ async function send() {
     }
 }
 
-function render(s, t, f, fn, time) {
+function render(s, t, f, fn, time, id, isRead) {
     const box = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = `msg-row ${s === myNick ? 'me' : 'them'}`;
+    
+    const tickClass = isRead ? 'fa-check-double' : 'fa-check';
+    const ticks = s === myNick ? `<i class="fa-solid ${tickClass} status-tick"></i>` : '';
+
     d.innerHTML = `<div class="bubble">
         ${f ? (f.startsWith('data:image') ? `<img src="${f}" style="max-width:100%">` : `<a href="${f}" download="${fn}">📁 ${fn}</a>`) : ''}
-        <span>${t || ''}</span><small style="display:block;font-size:0.6rem;opacity:0.5;text-align:right;">${time || ''}</small>
+        <span>${t || ''}</span>
+        <div class="msg-meta">
+            <small>${time || ''}</small>
+            ${ticks}
+        </div>
     </div>`;
     box.appendChild(d);
     box.scrollTop = box.scrollHeight;
