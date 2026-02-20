@@ -14,60 +14,71 @@ const db = new Client({
     ssl: { rejectUnauthorized: false }
 });
 
-async function init() {
+async function boot() {
     try {
         await db.connect();
-        // Таблица пользователей
-        await db.query(`CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY)`);
-        // Таблица чатов (у каждого чата есть ID)
-        await db.query(`CREATE TABLE IF NOT EXISTS chats (chat_id TEXT PRIMARY KEY)`);
-        // Кто в каком чате
-        await db.query(`CREATE TABLE IF NOT EXISTS chat_members (chat_id TEXT, username TEXT, PRIMARY KEY(chat_id, username))`);
-        // Сообщения
-        await db.query(`CREATE TABLE IF NOT EXISTS messages (chat_id TEXT, sender TEXT, text TEXT, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-        console.log("Database Ready");
-    } catch (e) { console.error(e); }
+        // Создаем таблицы с правильной логикой связей
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY);
+            CREATE TABLE IF NOT EXISTS chats (chat_id TEXT PRIMARY KEY, type TEXT DEFAULT 'private');
+            CREATE TABLE IF NOT EXISTS chat_members (chat_id TEXT, username TEXT, PRIMARY KEY(chat_id, username));
+            CREATE TABLE IF NOT EXISTS messages (id SERIAL, chat_id TEXT, sender TEXT, text TEXT, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+        `);
+        console.log("=== NEBULA SYSTEM ONLINE ===");
+    } catch (e) { console.error("CRITICAL DB ERROR", e); }
 }
-init();
+boot();
 
 io.on('connection', (socket) => {
-    // Регистрация ника при входе
-    socket.on('auth', async (nick) => {
-        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [nick]);
-        socket.emit('auth_ok');
+    // 1. Авторизация и регистрация
+    socket.on('login', async (nick) => {
+        try {
+            await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [nick]);
+            socket.username = nick;
+            socket.join(nick); // Личная комната для уведомлений
+            console.log(`User ${nick} authorized`);
+            socket.emit('login_success');
+        } catch (e) { console.log(e); }
     });
 
-    // Поиск чатов пользователя
-    socket.on('get_my_chats', async (nick) => {
+    // 2. Получение списка диалогов
+    socket.on('fetch_chats', async (nick) => {
         const res = await db.query(`
-            SELECT cm2.chat_id, cm2.username as partner 
-            FROM chat_members cm1
-            JOIN chat_members cm2 ON cm1.chat_id = cm2.chat_id
-            WHERE cm1.username = $1 AND cm2.username != $1
+            SELECT m2.chat_id, m2.username as partner
+            FROM chat_members m1
+            JOIN chat_members m2 ON m1.chat_id = m2.chat_id
+            WHERE m1.username = $1 AND m2.username != $1
         `, [nick]);
-        socket.emit('chats_list', res.rows);
+        socket.emit('update_chats', res.rows);
     });
 
-    // Найти пользователя и начать чат
-    socket.on('start_chat', async ({ me, partner }) => {
-        const chatId = [me, partner].sort().join('_'); // Уникальный ID для пары
-        await db.query("INSERT INTO chats (chat_id) VALUES ($1) ON CONFLICT DO NOTHING", [chatId]);
-        await db.query("INSERT INTO chat_members (chat_id, username) VALUES ($1, $2) ON CONFLICT DO NOTHING", [chatId, me]);
-        await db.query("INSERT INTO chat_members (chat_id, username) VALUES ($1, $2) ON CONFLICT DO NOTHING", [chatId, partner]);
-        
-        socket.emit('chat_ready', chatId);
+    // 3. Создание нового чата (Поиск ника)
+    socket.on('create_chat', async ({ me, partner }) => {
+        try {
+            const chatId = [me, partner].sort().join('_');
+            await db.query("INSERT INTO chats (chat_id) VALUES ($1) ON CONFLICT DO NOTHING", [chatId]);
+            await db.query("INSERT INTO chat_members (chat_id, username) VALUES ($1, $2) ON CONFLICT DO NOTHING", [chatId, me]);
+            await db.query("INSERT INTO chat_members (chat_id, username) VALUES ($1, $2) ON CONFLICT DO NOTHING", [chatId, partner]);
+            
+            // Уведомляем обоих участников
+            io.to(me).to(partner).emit('chat_created', chatId);
+        } catch (e) { console.log(e); }
     });
 
-    socket.on('join_chat', async (chatId) => {
+    // 4. Вход в конкретный чат
+    socket.on('open_chat', async (chatId) => {
         socket.join(chatId);
         const res = await db.query("SELECT sender, text FROM messages WHERE chat_id = $1 ORDER BY ts ASC", [chatId]);
-        socket.emit('history', res.rows);
+        socket.emit('load_history', res.rows);
     });
 
-    socket.on('msg', async (data) => {
-        await db.query("INSERT INTO messages (chat_id, sender, text) VALUES ($1, $2, $3)", [data.chatId, data.sender, data.text]);
-        io.to(data.chatId).emit('new_msg', data);
+    // 5. Отправка сообщения
+    socket.on('send_message', async (data) => {
+        try {
+            await db.query("INSERT INTO messages (chat_id, sender, text) VALUES ($1, $2, $3)", [data.chatId, data.sender, data.text]);
+            io.to(data.chatId).emit('new_message', data);
+        } catch (e) { console.log(e); }
     });
 });
 
-server.listen(process.env.PORT || 10000);
+server.listen(process.env.PORT || 10000, '0.0.0.0');
