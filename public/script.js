@@ -1,74 +1,79 @@
 const socket = io();
-let me = localStorage.getItem('nick') || prompt("Твой ник:");
-if(!me) me = "User" + Math.floor(Math.random()*100);
-localStorage.setItem('nick', me);
-document.getElementById('me').innerText = me;
+let nick = localStorage.getItem('chat_nick') || prompt("Твой ник:");
+if (!nick) nick = "User" + Math.random().toString(36).substring(7);
+localStorage.setItem('chat_nick', nick);
+document.getElementById('my-nick').innerText = nick;
 
-let curRoom = null;
+let activeRoom = null;
 
-// Загрузка комнат
-const loadRooms = () => socket.emit('get_my_rooms', me);
+// Загрузка списка чатов
+function loadRooms() {
+    socket.emit('get_rooms', nick);
+}
 loadRooms();
 
-socket.on('rooms_list', rooms => {
+socket.on('list_rooms', rooms => {
     const list = document.getElementById('room-list');
     list.innerHTML = '';
     rooms.forEach(r => {
         const d = document.createElement('div');
-        d.className = `room-item ${curRoom === r ? 'active' : ''}`;
+        d.className = `room ${activeRoom === r ? 'active' : ''}`;
         d.innerText = r;
         d.onclick = () => selectRoom(r);
         list.appendChild(d);
     });
 });
 
-function createRoomPrompt() {
+function newChat() {
     const r = prompt("Название чата:");
-    if(r) socket.emit('create_room', { room: r, user: me });
+    if (r) socket.emit('create_room', { room: r, nick: nick });
 }
 
-function addUserPrompt() {
-    const u = prompt("Ник того, кого добавить:");
-    if(u) socket.emit('add_user_to_room', { room: curRoom, targetUser: u });
+function invite() {
+    const friend = prompt("Ник друга:");
+    if (friend) socket.emit('add_friend', { room: activeRoom, friend: friend });
 }
 
 function selectRoom(r) {
-    curRoom = r;
-    document.getElementById('cur-room-name').innerText = r;
-    document.getElementById('add-user-btn').style.display = 'block';
-    document.getElementById('input-zone').style.display = 'flex';
-    socket.emit('join_room', { room: r, user: me });
-    loadRooms(); // Обновить активный статус в списке
-    if(window.innerWidth < 768) toggleMenu();
+    activeRoom = r;
+    document.getElementById('chat-name').innerText = r;
+    document.getElementById('add-u').style.display = 'block';
+    document.getElementById('controls').style.display = 'flex';
+    socket.emit('join_chat', { room: r });
+    loadRooms();
+    if (window.innerWidth < 768) menu();
 }
 
 socket.on('history', msgs => {
-    const box = document.getElementById('msgs');
+    const box = document.getElementById('chat-box');
     box.innerHTML = '';
-    msgs.forEach(addMsg);
+    msgs.forEach(m => addMessage(m.sender, m.txt));
 });
 
-socket.on('new_msg', m => { if(m.room === curRoom) addMsg(m); });
+socket.on('new_msg', data => {
+    if (data.room === activeRoom) addMessage(data.nick, data.txt);
+});
 
-function addMsg(m) {
-    const box = document.getElementById('msgs');
+function addMessage(sender, txt) {
+    const box = document.getElementById('chat-box');
     const d = document.createElement('div');
-    d.className = `msg ${m.username === me ? 'mine' : ''}`;
-    d.innerHTML = `<small>${m.username}</small><br>${m.content}`;
+    d.className = `m ${sender === nick ? 'me' : ''}`;
+    d.innerHTML = `<small style="display:block;margin-bottom:3px;opacity:0.7">${sender}</small>${txt}`;
     box.appendChild(d);
     box.scrollTop = box.scrollHeight;
 }
 
-document.getElementById('s-btn').onclick = () => {
-    const i = document.getElementById('m-input');
-    if(i.value && curRoom) {
-        socket.emit('send_msg', { user: me, text: i.value, room: curRoom });
+function send() {
+    const i = document.getElementById('m-text');
+    if (i.value.trim() && activeRoom) {
+        socket.emit('msg', { nick, txt: i.value, room: activeRoom });
         i.value = '';
     }
-};
+}
 
-socket.on('check_invites', target => { if(target === me) loadRooms(); });
+function enter(e) { if (e.key === 'Enter') send(); }
 
-socket.on('room_update', () => loadRooms());
+socket.on('update_ui', loadRooms);
+socket.on('refresh_for', target => { if (target === nick) loadRooms(); });
 
-function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
+function menu() { document.getElementById('side').classList.toggle('active'); }
