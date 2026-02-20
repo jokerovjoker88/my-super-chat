@@ -22,6 +22,9 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-s
 .msg-row.me { justify-content: flex-end; }
 .bubble { max-width: 75%; padding: 8px 12px; border-radius: 12px; background: #182533; }
 .me .bubble { background: var(--acc); }
+.msg-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; }
+.msg-meta small { font-size: 0.65rem; opacity: 0.6; }
+.status-tick { font-size: 0.7rem; color: #40a7e3; }
 .input-bar { padding: 12px; background: var(--side); display: flex; align-items: center; gap: 12px; }
 .input-bar input { flex: 1; background: none; border: none; color: #fff; font-size: 16px; outline: none; }
 #send-btn, .attach { color: #5085b1; font-size: 1.4rem; cursor: pointer; background: none; border: none; }
