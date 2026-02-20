@@ -21,8 +21,8 @@ async function boot() {
             CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, avatar TEXT, is_online BOOLEAN DEFAULT FALSE);
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
-                sender TEXT REFERENCES users(username),
-                receiver TEXT REFERENCES users(username),
+                sender TEXT,
+                receiver TEXT,
                 content TEXT,
                 file_data TEXT,
                 file_name TEXT,
@@ -30,7 +30,7 @@ async function boot() {
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        console.log("=== SERVER ONLINE ===");
+        console.log("=== SERVER IS LIVE ===");
     } catch (e) { console.error(e); }
 }
 boot();
@@ -38,24 +38,26 @@ boot();
 io.on('connection', (socket) => {
     socket.on('auth', async (nick) => {
         if (!nick) return;
-        await db.query("INSERT INTO users (username, is_online) VALUES ($1, TRUE) ON CONFLICT (username) DO UPDATE SET is_online = TRUE", [nick]);
         socket.username = nick;
         socket.join(nick);
+        await db.query("INSERT INTO users (username, is_online) VALUES ($1, TRUE) ON CONFLICT (username) DO UPDATE SET is_online = TRUE", [nick]);
         const user = await db.query("SELECT avatar FROM users WHERE username = $1", [nick]);
         socket.emit('auth_ok', { avatar: user.rows[0]?.avatar });
         io.emit('status_update');
     });
 
     socket.on('update_avatar', async (img) => {
-        if (socket.username) await db.query("UPDATE users SET avatar = $1 WHERE username = $2", [img, socket.username]);
+        if (socket.username) {
+            await db.query("UPDATE users SET avatar = $1 WHERE username = $2", [img, socket.username]);
+            io.emit('status_update');
+        }
     });
 
     socket.on('get_my_dialogs', async (me) => {
         const res = await db.query(`
-            SELECT DISTINCT ON (partner) partner, u.is_online, u.avatar,
-            (SELECT COUNT(*) FROM messages WHERE sender = partner AND receiver = $1 AND is_read = FALSE) as unread
-            FROM (SELECT receiver as partner FROM messages WHERE sender = $1 UNION SELECT sender as partner FROM messages WHERE receiver = $1) s 
-            JOIN users u ON u.username = s.partner
+            SELECT DISTINCT ON (username) username as partner, is_online, avatar,
+            (SELECT COUNT(*) FROM messages WHERE sender = username AND receiver = $1 AND is_read = FALSE) as unread
+            FROM users WHERE username != $1
         `, [me]);
         socket.emit('dialogs_list', res.rows);
     });
@@ -69,12 +71,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('send_msg', async (data) => {
-        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [data.to]);
         await db.query("INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
             [data.from, data.to, data.text, data.file || null, data.fileName || null]);
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         io.to(data.from).to(data.to).emit('new_msg', { ...data, time });
-        io.to(data.to).emit('refresh_chats');
     });
 
     socket.on('disconnect', async () => {
