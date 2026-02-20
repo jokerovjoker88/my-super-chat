@@ -11,14 +11,13 @@ const io = new Server(server);
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
 
-let messages = [];
-let onlineUsers = {};
+let onlineUsers = {}; // { socketId: { name, currentRoom } }
 
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
         socket.username = data.username;
-        onlineUsers[socket.id] = { name: data.username };
-        socket.emit('load history', messages.slice(-50));
+        onlineUsers[socket.id] = { name: data.username, room: 'general' };
+        socket.join('general');
         io.emit('update online', Object.values(onlineUsers));
     });
 
@@ -26,16 +25,21 @@ io.on('connection', (socket) => {
         const msg = { 
             user: data.user, 
             text: data.text, 
+            room: data.room,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
         };
-        messages.push(msg);
-        if (messages.length > 100) messages.shift();
-        io.emit('chat message', msg);
+        // Отправляем сообщение только в конкретную комнату
+        io.to(data.room).emit('chat message', msg);
     });
 
-    // НОВОЕ: Передаем всем, что кто-то печатает
+    socket.on('join room', (roomName) => {
+        socket.leaveAll(); // Выходим из всех комнат
+        socket.join(roomName);
+        onlineUsers[socket.id].room = roomName;
+    });
+
     socket.on('typing', (data) => {
-        socket.broadcast.emit('user typing', { user: data.user });
+        socket.to(data.room).emit('user typing', { user: data.user });
     });
 
     socket.on('disconnect', () => {
@@ -45,6 +49,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Сервер запущен на порту ${PORT}`);
-});
+server.listen(PORT, () => console.log(`Сервер запущен`));
