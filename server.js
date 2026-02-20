@@ -17,14 +17,8 @@ const db = new Client({
 async function boot() {
     try {
         await db.connect();
-        
-        // 1. Пытаемся создать таблицы (если их еще нет)
         await db.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                username TEXT PRIMARY KEY, 
-                avatar TEXT, 
-                is_online BOOLEAN DEFAULT FALSE
-            );
+            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, avatar TEXT, is_online BOOLEAN DEFAULT FALSE);
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
                 sender TEXT,
@@ -35,18 +29,12 @@ async function boot() {
                 is_read BOOLEAN DEFAULT FALSE,
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+            ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
         `);
-
-        // 2. ИСПРАВЛЕНИЕ: Добавляем колонку is_read, если она пропала (фикс твоей ошибки)
-        await db.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;`);
-        // Также проверим остальные важные колонки на всякий случай
-        await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;`);
-        await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;`);
-
-        console.log("=== SERVER READY: DATABASE PATCHED ===");
-    } catch (e) { 
-        console.error("DB BOOT ERROR:", e); 
-    }
+        console.log("=== NEBULA CORE ONLINE ===");
+    } catch (e) { console.error(e); }
 }
 boot();
 
@@ -61,41 +49,44 @@ io.on('connection', (socket) => {
         io.emit('status_update');
     });
 
-    // ПОИСК ПО НИКУ: Если юзера нет, создаем его, чтобы можно было начать чат
-    socket.on('search_user', async (targetNick) => {
-        if (!targetNick) return;
-        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [targetNick]);
-        const res = await db.query("SELECT username, avatar, is_online FROM users WHERE username = $1", [targetNick]);
+    socket.on('search_user', async (target) => {
+        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [target]);
+        const res = await db.query("SELECT username, avatar, is_online FROM users WHERE username = $1", [target]);
         socket.emit('user_found', res.rows[0]);
+    });
+
+    socket.on('typing', ({ to, from }) => {
+        socket.to(to).emit('user_typing', { from });
+    });
+
+    socket.on('send_msg', async (data) => {
+        const res = await db.query(
+            "INSERT INTO messages (sender, receiver, content, file_data, file_name, is_read) VALUES ($1, $2, $3, $4, $5, FALSE) RETURNING id",
+            [data.from, data.to, data.text, data.file, data.fileName]
+        );
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        io.to(data.from).to(data.to).emit('new_msg', { ...data, id: res.rows[0].id, time });
+    });
+
+    socket.on('delete_msg', async ({ id, from, to }) => {
+        await db.query("DELETE FROM messages WHERE id = $1 AND sender = $2", [id, from]);
+        io.to(from).to(to).emit('msg_deleted', { id });
+    });
+
+    socket.on('load_chat', async ({ me, him }) => {
+        await db.query("UPDATE messages SET is_read = TRUE WHERE sender = $1 AND receiver = $2", [him, me]);
+        const res = await db.query(`SELECT id, sender, content, file_data, file_name, to_char(ts, 'HH24:MI') as time FROM messages 
+            WHERE (sender=$1 AND receiver=$2) OR (sender=$2 AND receiver=$1) ORDER BY ts ASC`, [me, him]);
+        socket.emit('chat_history', res.rows);
     });
 
     socket.on('get_my_dialogs', async (me) => {
         const res = await db.query(`
             SELECT DISTINCT ON (partner) partner, u.is_online, u.avatar,
             (SELECT COUNT(*) FROM messages WHERE sender = partner AND receiver = $1 AND is_read = FALSE) as unread
-            FROM (
-                SELECT receiver as partner FROM messages WHERE sender = $1
-                UNION
-                SELECT sender as partner FROM messages WHERE receiver = $1
-            ) s
-            JOIN users u ON u.username = s.partner
-        `, [me]);
+            FROM (SELECT receiver as partner FROM messages WHERE sender=$1 UNION SELECT sender as partner FROM messages WHERE receiver=$1) s
+            JOIN users u ON u.username = s.partner`, [me]);
         socket.emit('dialogs_list', res.rows);
-    });
-
-    socket.on('load_chat', async ({ me, him }) => {
-        // Та самая команда, которая вызывала ошибку:
-        await db.query("UPDATE messages SET is_read = TRUE WHERE sender = $1 AND receiver = $2", [him, me]);
-        const res = await db.query(`SELECT sender, content, file_data, file_name, to_char(ts, 'HH24:MI') as time FROM messages 
-            WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1) ORDER BY ts ASC`, [me, him]);
-        socket.emit('chat_history', res.rows);
-    });
-
-    socket.on('send_msg', async (data) => {
-        await db.query("INSERT INTO messages (sender, receiver, content, file_data, file_name, is_read) VALUES ($1, $2, $3, $4, $5, FALSE)",
-            [data.from, data.to, data.text, data.file || null, data.fileName || null]);
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        io.to(data.from).to(data.to).emit('new_msg', { ...data, time });
     });
 
     socket.on('disconnect', async () => {
