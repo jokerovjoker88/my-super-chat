@@ -33,7 +33,7 @@ async function boot() {
             ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
             ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
         `);
-        console.log("=== SERVER ONLINE ===");
+        console.log("=== SERVER ONLINE WITH READ STATUS ===");
     } catch (e) { console.error("DB ERROR:", e); }
 }
 boot();
@@ -66,16 +66,25 @@ io.on('connection', (socket) => {
     });
 
     socket.on('load_chat', async ({ me, him }) => {
+        // Помечаем как прочитанные
         await db.query("UPDATE messages SET is_read = TRUE WHERE sender = $1 AND receiver = $2", [him, me]);
-        const res = await db.query(`SELECT sender, content, file_data, file_name, to_char(ts, 'HH24:MI') as time FROM messages 
+        
+        const res = await db.query(`SELECT id, sender, content, file_data, file_name, is_read, to_char(ts, 'HH24:MI') as time FROM messages 
             WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1) ORDER BY ts ASC`, [me, him]);
+        
         socket.emit('chat_history', res.rows);
+        // Уведомляем собеседника
+        io.to(him).emit('messages_read_by_partner', { partner: me });
     });
 
     socket.on('send_msg', async (d) => {
-        await db.query("INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)", [d.from, d.to, d.text, d.file || null, d.fileName || null]);
+        const res = await db.query("INSERT INTO messages (sender, receiver, content, file_data, file_name, is_read) VALUES ($1, $2, $3, $4, $5, FALSE) RETURNING id", 
+            [d.from, d.to, d.text, d.file || null, d.fileName || null]);
+        
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        io.to(d.from).to(d.to).emit('new_msg', { ...d, time });
+        const msgData = { ...d, id: res.rows[0].id, time, is_read: false };
+        
+        io.to(d.from).to(d.to).emit('new_msg', msgData);
     });
 
     socket.on('disconnect', async () => {
