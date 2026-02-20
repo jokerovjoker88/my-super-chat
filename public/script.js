@@ -1,34 +1,46 @@
 const socket = io();
 let myNick = localStorage.getItem('tg_nick');
 
+// Проверка ника
 if (!myNick) {
     myNick = prompt("Введите ваш Никнейм:");
-    if (myNick) localStorage.setItem('tg_nick', myNick);
+    if (myNick) {
+        localStorage.setItem('tg_nick', myNick);
+    } else {
+        myNick = "User" + Math.floor(Math.random() * 1000);
+    }
 }
 document.getElementById('my-nick-display').innerText = myNick;
 
 let activePartner = null;
 
-// Старт
+// 1. Подключение и авторизация
 socket.emit('auth', myNick);
-socket.on('auth_ok', () => socket.emit('get_my_dialogs', myNick));
+socket.on('auth_ok', () => {
+    console.log("Авторизация успешна");
+    socket.emit('get_my_dialogs', myNick);
+});
 
-// Поиск
-document.getElementById('user-search').onkeypress = (e) => {
+// 2. Поиск пользователя
+const searchInput = document.getElementById('user-search');
+searchInput.onkeypress = (e) => {
     if (e.key === 'Enter') {
-        socket.emit('search_user', e.target.value.trim());
-        e.target.value = '';
+        const target = searchInput.value.trim();
+        if (target && target !== myNick) {
+            socket.emit('search_user', target);
+        }
+        searchInput.value = '';
     }
 };
 
 socket.on('user_found', (name) => {
-    if (name === myNick) return;
+    console.log("Пользователь найден:", name);
     openDialog(name);
 });
 
 socket.on('error_msg', (txt) => alert(txt));
 
-// Список диалогов
+// 3. Список диалогов (слева)
 socket.on('dialogs_list', list => {
     const box = document.getElementById('dialogs');
     box.innerHTML = '';
@@ -41,73 +53,71 @@ socket.on('dialogs_list', list => {
     });
 });
 
+// 4. Открытие чата
 function openDialog(name) {
     activePartner = name;
     document.getElementById('empty-state').style.display = 'none';
-    document.getElementById('chat-window').style.display = 'flex';
+    const chatWin = document.getElementById('chat-window');
+    chatWin.style.display = 'flex';
     document.getElementById('chat-with-name').innerText = name;
+    
+    // Загружаем историю
     socket.emit('load_chat', { me: myNick, him: name });
+    // Обновляем список чатов, чтобы подсветить активный
     socket.emit('get_my_dialogs', myNick);
 }
 
-// Сообщения
+// 5. Загрузка истории
 socket.on('chat_history', msgs => {
     const box = document.getElementById('messages');
     box.innerHTML = '';
     msgs.forEach(m => render(m.sender, m.content, m.file_data, m.file_name));
 });
 
+// 6. Получение нового сообщения
 socket.on('new_msg', data => {
-    if (data.from === activePartner || data.to === activePartner) {
+    // Если сообщение пришло в текущий открытый чат
+    if ((data.from === activePartner && data.to === myNick) || 
+        (data.from === myNick && data.to === activePartner)) {
         render(data.from, data.text, data.file, data.fileName);
     }
+    // В любом случае обновляем список слева (чтобы видеть новые чаты)
     socket.emit('get_my_dialogs', myNick);
 });
 
-function render(s, t, file, fileName) {
-    const box = document.getElementById('messages');
-    const d = document.createElement('div');
-    d.className = `msg-row ${s === myNick ? 'me' : 'them'}`;
-    
-    let content = `<div class="bubble">`;
-    if (file) {
-        if (file.startsWith('data:image')) {
-            content += `<img src="${file}" class="chat-img"><br>`;
-        } else {
-            content += `<a href="${file}" download="${fileName}" class="file-link"><i class="fa-solid fa-file"></i> ${fileName}</a><br>`;
-        }
-    }
-    content += `<span>${t}</span></div>`;
-    
-    d.innerHTML = content;
-    box.appendChild(d);
-    box.scrollTop = box.scrollHeight;
-}
-
-// Отправка
+// 7. Функция отправки
 async function send() {
     const inp = document.getElementById('msg-input');
     const fileInp = document.getElementById('file-input');
-    const file = fileInp.files[0];
+    const text = inp.value.trim();
     
     let fileData = null;
-    if (file) {
+    let fileName = null;
+
+    if (fileInp.files.length > 0) {
+        const file = fileInp.files[0];
         fileData = await toBase64(file);
+        fileName = file.name;
     }
 
-    if ((inp.value.trim() || fileData) && activePartner) {
+    // Если есть что отправлять и выбран собеседник
+    if ((text || fileData) && activePartner) {
+        console.log("Отправка сообщения для:", activePartner);
         socket.emit('send_msg', {
             from: myNick,
             to: activePartner,
-            text: inp.value.trim(),
+            text: text,
             file: fileData,
-            fileName: file ? file.name : null
+            fileName: fileName
         });
+        
+        // Очищаем поля
         inp.value = '';
         fileInp.value = '';
     }
 }
 
+// Вспомогательная функция для файлов
 const toBase64 = file => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -115,5 +125,44 @@ const toBase64 = file => new Promise((resolve, reject) => {
     reader.onerror = error => reject(error);
 });
 
-document.getElementById('send-btn').onclick = send;
-document.getElementById('msg-input').onkeypress = (e) => { if(e.key === 'Enter') send(); };
+// Слушатели кнопок
+document.getElementById('send-btn').onclick = (e) => {
+    e.preventDefault();
+    send();
+};
+
+document.getElementById('msg-input').onkeypress = (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        send();
+    }
+};
+
+// Отображение сообщения на экране
+function render(sender, text, file, fileName) {
+    const box = document.getElementById('messages');
+    const d = document.createElement('div');
+    d.className = `msg-row ${sender === myNick ? 'me' : 'them'}`;
+    
+    let contentHtml = `<div class="bubble">`;
+    
+    // Если есть файл
+    if (file) {
+        if (file.startsWith('data:image')) {
+            contentHtml += `<img src="${file}" class="chat-img" style="max-width:200px; border-radius:8px;"><br>`;
+        } else {
+            contentHtml += `<a href="${file}" download="${fileName}" class="file-link" style="color:#5085b1; display:block; margin-bottom:5px;">📁 ${fileName}</a>`;
+        }
+    }
+    
+    // Если есть текст
+    if (text) {
+        contentHtml += `<span>${text}</span>`;
+    }
+    
+    contentHtml += `</div>`;
+    d.innerHTML = contentHtml;
+    
+    box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
+}
