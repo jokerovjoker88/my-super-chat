@@ -2,56 +2,47 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula Prime Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Nebula Prime</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="luxury-bg">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-    </div>
+    <div class="luxury-bg"><div class="orb"></div></div>
 
     <div class="app-shell">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="logo"><i class="fa-solid fa-atom"></i> NEBULA<span>PRIME</span></div>
+                <div class="logo">NEBULA<span>PRO</span></div>
+                <button class="mobile-close" onclick="toggleMenu()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div id="users-box" class="users-list custom-scroll"></div>
-            <div class="profile-card">
-                <div id="user-display-avatar" class="avatar-circle">?</div>
-                <div class="user-meta">
-                    <span id="user-display">User</span>
-                    <span class="online-tag"><span class="dot"></span> Online</span>
-                </div>
+            <div id="users-box" class="users-list"></div>
+            <div class="profile-dock">
+                <div id="user-display-avatar" class="mini-avatar">?</div>
+                <span id="user-display">User</span>
             </div>
         </aside>
 
-        <main class="chat-area">
-            <header class="chat-header">
-                <div class="header-info">
-                    <h2>Общий канал</h2>
-                    <p><i class="fa-solid fa-shield-halved"></i> Quantum Encrypted</p>
+        <main class="chat-main">
+            <header class="navbar">
+                <button class="menu-trigger" onclick="toggleMenu()"><i class="fa-solid fa-bars-staggered"></i></button>
+                <div class="nav-info">
+                    <h2>Global Stream</h2>
+                    <span class="status-ok">● Online</span>
                 </div>
             </header>
 
-            <div id="messages" class="messages-container custom-scroll"></div>
+            <div id="messages" class="msg-viewport"></div>
+            <div id="typing-box" class="typing-indicator"></div>
 
-            <div id="typing-box" class="typing-status"></div>
-
-            <footer class="input-panel">
-                <div class="panel-inner">
-                    <label class="icon-btn">
+            <footer class="input-area">
+                <div class="input-wrap">
+                    <label class="attach-btn">
                         <i class="fa-solid fa-plus"></i>
                         <input type="file" id="file-input" hidden>
                     </label>
-                    <textarea id="msg-input" placeholder="Введите сообщение..." rows="1"></textarea>
-                    <div class="action-btns">
-                        <button id="record-btn" class="icon-btn"><i class="fa-solid fa-microphone"></i></button>
-                        <button id="send-btn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-                    </div>
+                    <textarea id="msg-input" placeholder="Сообщение..." rows="1"></textarea>
+                    <button id="send-btn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </footer>
         </main>
@@ -59,5 +50,8 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
+    <script>
+        function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
+    </script>
 </body>
 </html>
