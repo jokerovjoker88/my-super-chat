@@ -1,108 +1,117 @@
 :root {
-    --primary: #8e2de2;
-    --primary-gradient: linear-gradient(135deg, #8e2de2, #4a00e0);
-    --bg-dark: #0f0c29;
-    --glass-bg: rgba(255, 255, 255, 0.05);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --text: #ffffff;
+    --accent: #724cfe;
+    --accent-dark: #5a39d1;
+    --glass: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --bg-deep: #050505;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; transition: all 0.2s ease; }
+
 body, html {
-    margin: 0; padding: 0; height: 100%;
-    background: linear-gradient(to bottom, #24243e, #302b63, #0f0c29);
-    color: var(--text); font-family: 'Inter', -apple-system, sans-serif;
+    margin: 0; padding: 0; height: 100%; width: 100%;
+    background-color: var(--bg-deep);
+    color: white; font-family: 'Inter', sans-serif;
     overflow: hidden;
 }
 
-.glass-layout {
-    display: flex; height: 100vh; width: 100vw;
-    backdrop-filter: blur(10px); background: rgba(0,0,0,0.2);
+/* Анимированный фон */
+.bg-animate {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at 20% 30%, #1e1b4b 0%, #050505 100%);
+    z-index: -1;
 }
 
-/* Sidebar PRO */
-.sidebar {
-    width: 300px; background: rgba(0, 0, 0, 0.3);
-    border-right: 1px solid var(--glass-border);
-    display: flex; flex-direction: column;
+.app-shell {
+    display: flex; height: 100vh; max-width: 1600px; margin: 0 auto;
+    background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(20px);
 }
-.sidebar-header { padding: 30px; text-align: center; }
-.logo { font-size: 1.5rem; font-weight: 800; letter-spacing: 2px; }
-.logo span { color: var(--primary); }
 
-.users-list { flex: 1; padding: 15px; overflow-y: auto; }
+/* Side Panel */
+.side-panel {
+    width: 320px; border-right: 1px solid var(--glass-border);
+    display: flex; flex-direction: column; background: rgba(0,0,0,0.2);
+}
+.side-header { padding: 40px 30px; }
+.pro-logo { font-size: 1.4rem; font-weight: 900; letter-spacing: 3px; color: var(--accent); }
+.pro-logo span { color: white; }
+
+.side-nav { padding: 0 20px; margin-bottom: 30px; }
+.nav-item { 
+    padding: 12px 20px; border-radius: 12px; margin-bottom: 5px; 
+    cursor: pointer; display: flex; align-items: center; gap: 15px; color: #888;
+}
+.nav-item.active { background: var(--glass); color: white; border: 1px solid var(--glass-border); }
+.nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
+
+.online-label { font-size: 0.7rem; letter-spacing: 2px; padding: 0 35px; margin-bottom: 15px; color: #555; font-weight: bold; }
+.users-scroll-area { flex: 1; overflow-y: auto; padding: 0 20px; }
+
 .user-item {
-    background: var(--glass-bg); margin-bottom: 8px;
-    padding: 12px; border-radius: 12px; display: flex; align-items: center;
-    transition: 0.3s ease; cursor: pointer; border: 1px solid transparent;
+    display: flex; align-items: center; gap: 12px; padding: 12px 15px;
+    border-radius: 15px; cursor: pointer; margin-bottom: 5px;
 }
-.user-item:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
+.user-item:hover { background: var(--glass); }
+
+.user-profile-card {
+    padding: 20px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--glass-border);
+    display: flex; align-items: center; gap: 15px;
+}
 
 /* Main Chat Area */
-.chat-main { flex: 1; display: flex; flex-direction: column; position: relative; }
-.chat-navbar {
-    padding: 20px 30px; background: rgba(255,255,255,0.02);
-    display: flex; justify-content: space-between; align-items: center;
+.main-chat { flex: 1; display: flex; flex-direction: column; position: relative; }
+.top-bar {
+    padding: 25px 40px; display: flex; justify-content: space-between; align-items: center;
     border-bottom: 1px solid var(--glass-border);
 }
+.chat-meta h2 { margin: 0; font-size: 1.2rem; }
+.sub-text { margin: 5px 0 0; font-size: 0.75rem; color: #00ff88; opacity: 0.8; }
+.top-btns { display: flex; gap: 25px; font-size: 1.1rem; color: #666; cursor: pointer; }
 
-.messages-viewport {
-    flex: 1; overflow-y: auto; padding: 30px;
-    display: flex; flex-direction: column; gap: 15px;
-    background: radial-gradient(circle at center, rgba(142, 45, 226, 0.05) 0%, transparent 70%);
+.chat-viewport {
+    flex: 1; overflow-y: auto; padding: 40px;
+    display: flex; flex-direction: column; gap: 20px;
 }
 
-/* Стили пузырьков сообщений */
-.message-wrapper { display: flex; gap: 12px; max-width: 75%; animation: fadeIn 0.4s ease; }
+/* Сообщения */
+.message-wrapper { display: flex; gap: 15px; max-width: 70%; animation: slideUp 0.3s ease; }
 .my-wrapper { align-self: flex-end; flex-direction: row-reverse; }
 
 .message {
-    padding: 12px 18px; border-radius: 18px; line-height: 1.5; font-size: 0.95rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    padding: 15px 20px; border-radius: 22px; line-height: 1.6;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
-.my-message { 
-    background: var(--primary-gradient); border-bottom-right-radius: 4px; 
-}
-.other-message { 
-    background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px;
-    backdrop-filter: blur(5px);
-}
+.my-message { background: var(--accent); border-bottom-right-radius: 4px; }
+.other-message { background: #1e1e26; border-bottom-left-radius: 4px; }
 
-/* Input Area PRO */
-.input-bar {
-    margin: 20px; background: rgba(255,255,255,0.07);
-    padding: 10px 20px; border-radius: 30px;
-    display: flex; align-items: center; gap: 15px;
-    border: 1px solid var(--glass-border);
+/* Input */
+.bottom-controls { padding: 30px 40px; }
+.input-wrapper {
+    background: #16161a; padding: 8px 10px 8px 20px; border-radius: 20px;
+    display: flex; align-items: center; gap: 15px; border: 1px solid var(--glass-border);
 }
 #msg-input {
     flex: 1; background: transparent; border: none; color: white;
-    padding: 10px; font-size: 1rem; outline: none;
+    font-size: 1rem; outline: none; padding: 10px 0;
 }
-.action-btn, .attach-btn {
-    background: none; border: none; color: #aaa; cursor: pointer;
-    font-size: 1.2rem; transition: 0.3s;
-}
-.action-btn:hover { color: var(--primary); }
-.send-trigger {
-    background: var(--primary-gradient); border: none;
-    width: 45px; height: 45px; border-radius: 50%;
-    color: white; cursor: pointer; transition: 0.3s;
-}
-.send-trigger:hover { transform: scale(1.1); box-shadow: 0 0 15px var(--primary); }
+.tool-btn { background: none; border: none; color: #555; cursor: pointer; font-size: 1.2rem; }
+.tool-btn:hover { color: var(--accent); }
 
-/* Анимации */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+.main-send-btn {
+    background: var(--accent); color: white; border: none;
+    width: 48px; height: 48px; border-radius: 16px; cursor: pointer;
+    box-shadow: 0 5px 15px rgba(114, 76, 254, 0.4);
+}
+.main-send-btn:hover { background: var(--accent-dark); transform: translateY(-2px); }
+
+/* Аватарки */
+.mini-avatar {
+    width: 40px; height: 40px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; background: var(--accent);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
-.avatar {
-    width: 40px; height: 40px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-/* Скроллбар */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
