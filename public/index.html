@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nebula Cloud</title>
+    <title>Nebula Network</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -11,24 +11,32 @@
     <div class="wrapper">
         <aside id="side">
             <div class="side-header">
-                <h3>Мои чаты</h3>
+                <h3>Мои Каналы</h3>
                 <button onclick="menu()" class="mob"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <button class="add-btn" onclick="newChat()">+ Создать чат</button>
+            <div class="actions">
+                <button class="btn join" onclick="joinChatPrompt()">+ Найти / Создать</button>
+            </div>
             <div id="room-list"></div>
-            <div class="profile">Ник: <b id="my-nick">...</b></div>
+            <div class="profile">ID: <b id="my-nick">...</b></div>
         </aside>
 
         <main>
             <header>
-                <button onclick="menu()" class="mob"><i class="fa-solid fa-bars"></i></button>
-                <h2 id="chat-name">Выберите чат</h2>
-                <button id="add-u" style="display:none" onclick="invite()"><i class="fa-solid fa-user-plus"></i></button>
+                <div class="header-left">
+                    <button onclick="menu()" class="mob"><i class="fa-solid fa-bars"></i></button>
+                    <h2 id="chat-name">Выберите чат</h2>
+                </div>
+                <div class="header-right">
+                    <button id="add-u" class="icon-btn" style="display:none" title="Добавить друга" onclick="invite()">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </button>
+                </div>
             </header>
             <div id="chat-box"></div>
             <div class="input-wrap" id="controls" style="display:none">
-                <input type="text" id="m-text" placeholder="Сообщение..." onkeypress="enter(event)">
-                <button onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
+                <input type="text" id="m-text" placeholder="Написать..." onkeypress="enter(event)">
+                <button class="send-btn" onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </main>
     </div>
