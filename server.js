@@ -34,7 +34,7 @@ async function boot() {
             ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
         `);
         console.log("=== SERVER ONLINE ===");
-    } catch (e) { console.error("DB BOOT ERROR:", e); }
+    } catch (e) { console.error("DB ERROR:", e); }
 }
 boot();
 
@@ -60,13 +60,8 @@ io.on('connection', (socket) => {
         const res = await db.query(`
             SELECT DISTINCT ON (partner) partner, u.is_online, u.avatar,
             (SELECT COUNT(*) FROM messages WHERE sender = partner AND receiver = $1 AND is_read = FALSE) as unread
-            FROM (
-                SELECT receiver as partner FROM messages WHERE sender = $1
-                UNION
-                SELECT sender as partner FROM messages WHERE receiver = $1
-            ) s
-            JOIN users u ON u.username = s.partner
-        `, [me]);
+            FROM (SELECT receiver as partner FROM messages WHERE sender = $1 UNION SELECT sender as partner FROM messages WHERE receiver = $1) s
+            JOIN users u ON u.username = s.partner`, [me]);
         socket.emit('dialogs_list', res.rows);
     });
 
@@ -77,11 +72,10 @@ io.on('connection', (socket) => {
         socket.emit('chat_history', res.rows);
     });
 
-    socket.on('send_msg', async (data) => {
-        await db.query("INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
-            [data.from, data.to, data.text, data.file || null, data.fileName || null]);
+    socket.on('send_msg', async (d) => {
+        await db.query("INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)", [d.from, d.to, d.text, d.file || null, d.fileName || null]);
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        io.to(data.from).to(data.to).emit('new_msg', { ...data, time });
+        io.to(d.from).to(d.to).emit('new_msg', { ...d, time });
     });
 
     socket.on('disconnect', async () => {
@@ -93,4 +87,3 @@ io.on('connection', (socket) => {
 });
 
 server.listen(process.env.PORT || 10000, '0.0.0.0');
-// КОНЕЦ ФАЙЛА - ПРОВЕРЬ, ЧТО ЭТА СТРОКА ЕСТЬ
