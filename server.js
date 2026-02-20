@@ -30,8 +30,8 @@ async function boot() {
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        console.log("=== NEBULA CORE READY ===");
-    } catch (e) { console.error("DB Error:", e); }
+        console.log("=== SERVER ONLINE ===");
+    } catch (e) { console.error(e); }
 }
 boot();
 
@@ -43,7 +43,7 @@ io.on('connection', (socket) => {
         socket.join(nick);
         const user = await db.query("SELECT avatar FROM users WHERE username = $1", [nick]);
         socket.emit('auth_ok', { avatar: user.rows[0]?.avatar });
-        io.emit('status_update', { user: nick, online: true });
+        io.emit('status_update');
     });
 
     socket.on('update_avatar', async (img) => {
@@ -80,7 +80,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', async () => {
         if (socket.username) {
             await db.query("UPDATE users SET is_online = FALSE WHERE username = $1", [socket.username]);
-            io.emit('status_update', { user: socket.username, online: false });
+            io.emit('status_update');
         }
     });
 });
