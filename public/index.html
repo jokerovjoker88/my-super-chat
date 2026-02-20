@@ -18,25 +18,25 @@
                 <div class="my-info"><b id="my-name">...</b></div>
             </div>
             <div class="search-box">
-                <input type="text" id="user-search" placeholder="Никнейм...">
+                <input type="text" id="user-search" placeholder="Поиск по нику...">
                 <button id="search-btn"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="dialogs" class="dialogs"></div>
         </aside>
         <main class="chat-view">
-            <div id="welcome" class="centered">Выберите чат</div>
+            <div id="welcome" class="centered">Выберите чат, чтобы начать общение</div>
             <div id="chat-box" style="display: none; flex-direction: column; height: 100%;">
                 <header class="chat-header">
                     <button id="back-btn" class="mobile-only"><i class="fa-solid fa-arrow-left"></i></button>
                     <div class="header-info">
                         <span id="target-name">...</span>
-                        <small id="typing-status" style="color: #5085b1; display: block; font-size: 0.7rem; height: 12px;"></small>
+                        <small id="typing-status"></small>
                     </div>
                 </header>
                 <div id="messages" class="messages"></div>
                 <footer class="input-bar">
                     <label class="attach"><i class="fa-solid fa-paperclip"></i><input type="file" id="file-input" hidden></label>
-                    <input type="text" id="msg-input" placeholder="Сообщение...">
+                    <input type="text" id="msg-input" placeholder="Напишите сообщение...">
                     <button id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                 </footer>
             </div>
