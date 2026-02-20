@@ -3,15 +3,13 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
 
-let onlineUsers = {}; // { socketId: { name, currentRoom } }
+let onlineUsers = {}; 
 
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
@@ -25,17 +23,18 @@ io.on('connection', (socket) => {
         const msg = { 
             user: data.user, 
             text: data.text, 
-            room: data.room,
+            room: data.room || 'general',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
         };
-        // Отправляем сообщение только в конкретную комнату
-        io.to(data.room).emit('chat message', msg);
+        io.to(data.room || 'general').emit('chat message', msg);
     });
 
     socket.on('join room', (roomName) => {
-        socket.leaveAll(); // Выходим из всех комнат
+        socket.leaveAll(); 
         socket.join(roomName);
-        onlineUsers[socket.id].room = roomName;
+        if (onlineUsers[socket.id]) {
+            onlineUsers[socket.id].room = roomName;
+        }
     });
 
     socket.on('typing', (data) => {
@@ -49,5 +48,6 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Сервер запущен`));
-
+server.listen(PORT, () => {
+    console.log(`Сервер запущен на порту ${PORT}`);
+});
