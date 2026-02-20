@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nebula Rooms</title>
+    <title>Nebula Private Rooms</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -12,21 +12,15 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">NEBULA<span>ROOMS</span></div>
-                <button class="close-menu" onclick="toggleMenu()"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="toggleMenu()" class="close-menu"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
-            <div class="section-label">ДОСТУПНЫЕ ЧАТЫ</div>
-            <div class="rooms-list" id="rooms-box">
-                <div class="room-item active" onclick="switchRoom('general')">
-                    <i class="fa-solid fa-hashtag"></i> <span>Общий чат</span>
-                </div>
-                <div class="room-item" onclick="switchRoom('gaming')">
-                    <i class="fa-solid fa-gamepad"></i> <span>Игры</span>
-                </div>
-                <div class="room-item" onclick="switchRoom('work')">
-                    <i class="fa-solid fa-briefcase"></i> <span>Работа</span>
-                </div>
+            <div class="rooms-actions">
+                <button onclick="createRoom()" class="btn-create"><i class="fa-solid fa-plus"></i> Создать чат</button>
             </div>
+
+            <div class="rooms-list" id="rooms-box">
+                </div>
 
             <div class="user-profile">
                 <div id="user-avatar" class="avatar">?</div>
@@ -38,14 +32,16 @@
             <header class="top-nav">
                 <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars-staggered"></i></button>
                 <div class="chat-meta">
-                    <h2 id="current-room-title">Общий чат</h2>
-                    <p id="online-status">Защищенное соединение</p>
+                    <h2 id="room-title">Выберите чат</h2>
                 </div>
+                <button id="invite-btn" class="btn-invite" style="display:none;" onclick="inviteUser()">
+                    <i class="fa-solid fa-user-plus"></i>
+                </button>
             </header>
 
             <div id="messages" class="messages-area"></div>
 
-            <footer class="input-section">
+            <footer class="input-section" id="input-footer" style="display:none;">
                 <div class="input-container">
                     <textarea id="msg-input" placeholder="Введите сообщение..." rows="1"></textarea>
                     <button id="send-btn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
