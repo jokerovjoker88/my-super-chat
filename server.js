@@ -5,7 +5,10 @@ const { Client } = require('pg');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" }, maxHttpBufferSize: 1e7 });
+const io = new Server(server, { 
+    cors: { origin: "*" }, 
+    maxHttpBufferSize: 1e7 // Разрешаем файлы до 10МБ
+});
 
 app.use(express.static('public'));
 
@@ -14,10 +17,10 @@ const db = new Client({
     ssl: { rejectUnauthorized: false }
 });
 
-async function setup() {
+async function initSystem() {
     try {
         await db.connect();
-        // Мы НЕ удаляем таблицы каждый раз, а просто создаем их, если их нет
+        // Создаем таблицы, если их нет
         await db.query(`
             CREATE TABLE IF NOT EXISTS users (
                 username TEXT PRIMARY KEY,
@@ -33,12 +36,13 @@ async function setup() {
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        console.log("=== NEBULA SYSTEM READY ===");
-    } catch (e) { console.error("Setup Error:", e); }
+        console.log("=== NEBULA CORE v3: ONLINE ===");
+    } catch (e) { console.error("DB Init Error:", e); }
 }
-setup();
+initSystem();
 
 io.on('connection', (socket) => {
+    // Вход / Регистрация
     socket.on('auth', async (nick) => {
         if (!nick) return;
         try {
@@ -46,38 +50,46 @@ io.on('connection', (socket) => {
             socket.username = nick;
             socket.join(nick);
             socket.emit('auth_ok');
-        } catch (e) { console.error("Auth error:", e); }
+        } catch (e) { console.error(e); }
     });
 
+    // Поиск любого ника (Бесконечные пользователи)
     socket.on('search_user', async (target) => {
-        const res = await db.query("SELECT username FROM users WHERE username = $1", [target]);
-        if (res.rows.length > 0) {
-            socket.emit('user_found', res.rows[0].username);
-        } else {
-            socket.emit('error_msg', 'Пользователь не найден. Он должен хотя бы раз зайти в мессенджер.');
-        }
+        if (!target) return;
+        try {
+            // Если пользователя нет, создаем его "заочно"
+            await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [target]);
+            socket.emit('user_found', target);
+        } catch (e) { console.error(e); }
     });
 
+    // Загрузка списка чатов
     socket.on('get_my_dialogs', async (me) => {
-        const res = await db.query(`
-            SELECT DISTINCT CASE WHEN sender = $1 THEN receiver ELSE sender END as partner
-            FROM messages WHERE sender = $1 OR receiver = $1
-        `, [me]);
-        socket.emit('dialogs_list', res.rows);
+        try {
+            const res = await db.query(`
+                SELECT DISTINCT CASE WHEN sender = $1 THEN receiver ELSE sender END as partner
+                FROM messages WHERE sender = $1 OR receiver = $1
+            `, [me]);
+            socket.emit('dialogs_list', res.rows);
+        } catch (e) { console.error(e); }
     });
 
+    // Загрузка истории
     socket.on('load_chat', async ({ me, him }) => {
-        const res = await db.query(`
-            SELECT sender, content, file_data, file_name, ts FROM messages 
-            WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1)
-            ORDER BY ts ASC
-        `, [me, him]);
-        socket.emit('chat_history', res.rows);
+        try {
+            const res = await db.query(`
+                SELECT sender, content, file_data, file_name, ts FROM messages 
+                WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1)
+                ORDER BY ts ASC
+            `, [me, him]);
+            socket.emit('chat_history', res.rows);
+        } catch (e) { console.error(e); }
     });
 
+    // Отправка сообщения
     socket.on('send_msg', async (data) => {
         try {
-            // ФИКС ОШИБКИ: Гарантируем, что оба пользователя есть в базе перед отправкой
+            // Гарантируем наличие отправителя и получателя в базе
             await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [data.from]);
             await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [data.to]);
 
@@ -85,11 +97,10 @@ io.on('connection', (socket) => {
                 "INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
                 [data.from, data.to, data.text, data.file || null, data.fileName || null]
             );
+            
+            // Рассылаем участникам
             io.to(data.from).to(data.to).emit('new_msg', data);
-        } catch (e) { 
-            console.error("Critical Send Error:", e.message);
-            socket.emit('error_msg', 'Ошибка отправки: ' + e.message);
-        }
+        } catch (e) { console.error("Message error:", e); }
     });
 });
 
