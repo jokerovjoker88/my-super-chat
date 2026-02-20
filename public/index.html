@@ -1,27 +1,31 @@
-М<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nebula Pro</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div class="app">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="search-area">
-                <input type="text" id="user-search" placeholder="Поиск ника (Enter)...">
+                <div class="search-wrapper">
+                    <input type="text" id="user-search" placeholder="Ник друга..." inputmode="search">
+                    <button id="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
             </div>
             <div id="dialogs" class="dialogs"></div>
             <div class="user-info">Вы: <b id="my-name">...</b></div>
         </aside>
 
         <main class="chat-view">
-            <div id="welcome" class="centered">Выберите чат для общения</div>
+            <div id="welcome" class="centered">Выберите, кому написать</div>
             
             <div id="chat-box" style="display: none; flex-direction: column; height: 100%;">
                 <header class="chat-header">
+                    <button id="back-btn" class="mobile-only"><i class="fa-solid fa-arrow-left"></i></button>
                     <span id="target-name">...</span>
                 </header>
                 <div id="messages" class="messages"></div>
