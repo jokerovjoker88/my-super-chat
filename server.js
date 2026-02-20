@@ -2,26 +2,28 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const { Client } = require('pg'); // Подключаем драйвер PostgreSQL
+const { Client } = require('pg');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    maxHttpBufferSize: 1e8 // Лимит 100мб для передачи файлов
+    maxHttpBufferSize: 1e8 // 100mb для файлов и аудио
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 1. Настройка подключения к PostgreSQL через переменную окружения Render
+// Настройка подключения к базе
+// Мы используем ПРЯМУЮ проверку переменной DATABASE_URL
 const db = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false } // Обязательно для облачных баз
+    ssl: { rejectUnauthorized: false }
 });
 
-// 2. Подключаемся и создаем таблицу
+// Подключаемся к базе
 db.connect()
     .then(() => {
-        console.log('Успешно подключено к PostgreSQL');
+        console.log('✅ УСПЕШНО: Подключено к PostgreSQL');
+        // Создаем таблицу, если её нет
         return db.query(`
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
@@ -35,29 +37,34 @@ db.connect()
             )
         `);
     })
-    .catch(err => console.error('Ошибка БД:', err));
+    .catch(err => {
+        console.error('❌ ОШИБКА БАЗЫ ДАННЫХ:', err.message);
+        console.log('Проверь, добавил ли ты DATABASE_URL в разделе Environment на Render!');
+    });
 
 let onlineUsers = {};
 
 io.on('connection', (socket) => {
-    // Вход в чат
+    // Вход пользователя
     socket.on('join', async (data) => {
         socket.username = data.username;
         onlineUsers[socket.id] = { name: data.username, room: 'general' };
         socket.join('general');
 
-        // Загружаем историю из БД
+        // Загрузка истории из базы
         try {
             const res = await db.query(
                 "SELECT * FROM messages WHERE room = 'general' ORDER BY created_at DESC LIMIT 50"
             );
             socket.emit('load history', res.rows.reverse());
-        } catch (err) { console.error('Ошибка загрузки истории:', err); }
+        } catch (err) {
+            console.error('Ошибка загрузки истории:', err.message);
+        }
 
         io.emit('update online', Object.values(onlineUsers));
     });
 
-    // Обработка сообщения
+    // Обработка новых сообщений
     socket.on('chat message', async (data) => {
         const { user, text, room, file, fileName, fileType, audio } = data;
         let msg_type = 'text';
@@ -66,13 +73,15 @@ io.on('connection', (socket) => {
         if (file) { msg_type = 'file'; content = file; }
         else if (audio) { msg_type = 'audio'; content = audio; }
 
-        // Сохраняем в PostgreSQL
+        // Сохранение в базу
         try {
             await db.query(
                 "INSERT INTO messages (username, content, room, msg_type, file_name, file_type) VALUES ($1, $2, $3, $4, $5, $6)",
                 [user, content, room, msg_type, fileName || null, fileType || null]
             );
-        } catch (err) { console.error('Ошибка сохранения в БД:', err); }
+        } catch (err) {
+            console.error('Ошибка сохранения сообщения:', err.message);
+        }
 
         io.to(room).emit('chat message', {
             ...data,
@@ -80,7 +89,7 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Переключение комнат (приват)
+    // Переход в приватную комнату
     socket.on('join room', async (roomName) => {
         socket.leaveAll();
         socket.join(roomName);
@@ -92,7 +101,9 @@ io.on('connection', (socket) => {
                 [roomName]
             );
             socket.emit('load history', res.rows.reverse());
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error('Ошибка загрузки привата:', err.message);
+        }
     });
 
     socket.on('typing', (data) => {
@@ -106,4 +117,6 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
+server.listen(PORT, () => {
+    console.log(`🚀 Сервер запущен на порту ${PORT}`);
+});
