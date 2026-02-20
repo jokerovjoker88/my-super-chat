@@ -3,80 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Messenger Elite</title>
+    <title>Nebula Prime | Secure Chat</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="luxury-bg">
-        <div class="light-orb orb-gold"></div>
-        <div class="light-orb orb-blue"></div>
+    <div class="space-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
     </div>
 
-    <div class="main-layout">
-        <aside class="sidebar-premium">
-            <div class="sidebar-brand">
-                <div class="brand-hexagon"><i class="fa-solid fa-diamond"></i></div>
-                <span>NEBULA<strong>ELITE</strong></span>
-            </div>
-
-            <div class="search-premium">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" placeholder="Поиск в системе...">
-            </div>
-
-            <div class="users-scroll custom-scroll">
-                <div class="section-label">Активные узлы</div>
-                <div id="users-box"></div>
-            </div>
-
-            <div class="profile-dock">
-                <div class="profile-avatar-wrap">
-                    <div id="user-display-avatar" class="avatar-elite">?</div>
-                    <div class="online-ring"></div>
+    <div class="master-container">
+        <aside class="glass-sidebar">
+            <div class="sidebar-top">
+                <div class="logo-wrap">
+                    <div class="logo-core"></div>
+                    <span>NEBULA<strong>PRIME</strong></span>
                 </div>
-                <div class="profile-text">
+            </div>
+
+            <div class="search-bar-wrap">
+                <div class="search-inner">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Поиск контактов...">
+                </div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-group-label">АКТИВНЫЕ УЗЛЫ</div>
+                <div id="users-box" class="custom-scroll"></div>
+            </div>
+
+            <div class="current-user-plate">
+                <div class="user-avatar-main" id="user-display-avatar">?</div>
+                <div class="user-meta">
                     <span id="user-display">Загрузка...</span>
-                    <p>Status: Online</p>
+                    <div class="badge-online"><span class="dot-pulse"></span>Система активна</div>
                 </div>
-                <button class="icon-btn-settings"><i class="fa-solid fa-gear"></i></button>
+                <button class="settings-trigger"><i class="fa-solid fa-sliders"></i></button>
             </div>
         </aside>
 
-        <main class="chat-viewport">
-            <header class="chat-navbar-elite">
-                <div class="navbar-left">
-                    <button id="back-btn" class="nav-back" style="display:none;"><i class="fa-solid fa-chevron-left"></i></button>
-                    <div class="nav-titles">
-                        <h2 id="chat-title">Quantum Core</h2>
-                        <span class="encryption-badge"><i class="fa-solid fa-shield-halved"></i> 2048-bit Encrypted</span>
+        <main class="chat-engine">
+            <header class="chat-navbar">
+                <div class="nav-left">
+                    <button id="back-btn" class="nav-icon-btn" style="display:none;"><i class="fa-solid fa-chevron-left"></i></button>
+                    <div class="chat-title-block">
+                        <h2 id="chat-title">Главный поток</h2>
+                        <div class="security-status"><i class="fa-solid fa-shield-halved"></i> Quantum Encrypted</div>
                     </div>
                 </div>
-                <div class="navbar-right">
-                    <div class="active-participants">
-                        <i class="fa-solid fa-users"></i> <span id="online-count">0</span>
-                    </div>
+                <div class="nav-right">
+                    <button class="nav-icon-btn"><i class="fa-solid fa-phone-slash"></i></button>
+                    <button class="nav-icon-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                 </div>
             </header>
 
-            <div id="messages" class="messages-container custom-scroll">
+            <div id="messages" class="messages-flow custom-scroll">
                 </div>
 
-            <div id="typing-box" class="typing-indicator"></div>
+            <div class="status-bar" id="typing-box"></div>
 
-            <footer class="input-dock-area">
-                <div class="input-glass-container">
-                    <label class="btn-attach-premium">
+            <footer class="input-console">
+                <div class="console-inner">
+                    <label class="console-btn attach-trigger">
                         <i class="fa-solid fa-plus"></i>
                         <input type="file" id="file-input" hidden>
                     </label>
                     
-                    <textarea id="msg-input" placeholder="Напишите что-нибудь..." rows="1"></textarea>
+                    <textarea id="msg-input" placeholder="Введите ваше сообщение..." rows="1"></textarea>
                     
-                    <div class="input-utility-btns">
-                        <button id="record-btn" class="btn-util"><i class="fa-solid fa-microphone"></i></button>
-                        <button id="send-btn" class="btn-send-elite">
+                    <div class="console-actions">
+                        <button id="record-btn" class="console-btn mic-trigger"><i class="fa-solid fa-microphone"></i></button>
+                        <button id="send-btn" class="console-send">
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
                     </div>
