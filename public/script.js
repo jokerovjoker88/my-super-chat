@@ -1,33 +1,36 @@
 const socket = io();
-let myNick = localStorage.getItem('tg_nick') || prompt("Ник:");
-localStorage.setItem('tg_nick', myNick);
+let myNick = localStorage.getItem('tg_nick') || prompt("Ваш ник:");
+if (myNick) localStorage.setItem('tg_nick', myNick);
 document.getElementById('my-name').innerText = myNick;
 
 let activeChat = null;
-let typingTimeout;
 
 socket.emit('auth', myNick);
 socket.on('auth_ok', () => socket.emit('get_my_dialogs', myNick));
 
-// Поиск
-document.getElementById('user-search').onkeypress = (e) => {
-    if (e.key === 'Enter' && e.target.value.trim()) {
-        socket.emit('search_user', e.target.value.trim());
-        e.target.value = '';
+// Поиск (исправлено для телефонов)
+function doSearch() {
+    const inp = document.getElementById('user-search');
+    const val = inp.value.trim();
+    if (val && val !== myNick) {
+        socket.emit('search_user', val);
+        inp.value = '';
+        inp.blur();
     }
-};
+}
+document.getElementById('search-btn').onclick = doSearch;
+document.getElementById('user-search').onkeypress = (e) => { if(e.key === 'Enter') doSearch(); };
 
 socket.on('user_found', name => openChat(name));
 
-// Обновление списка чатов
+// Список чатов
 socket.on('dialogs_list', list => {
     const box = document.getElementById('dialogs');
     box.innerHTML = '';
     list.forEach(d => {
         const el = document.createElement('div');
         el.className = `dialog-item ${activeChat === d.partner ? 'active' : ''}`;
-        el.innerHTML = `<div class="ava">${d.partner[0].toUpperCase()}</div> 
-                        <div class="d-info"><b>${d.partner}</b><div id="status-${d.partner}" class="typing-status"></div></div>`;
+        el.innerHTML = `<div class="ava">${d.partner[0].toUpperCase()}</div> <span>${d.partner}</span>`;
         el.onclick = () => openChat(d.partner);
         box.appendChild(el);
     });
@@ -38,25 +41,24 @@ function openChat(name) {
     document.getElementById('welcome').style.display = 'none';
     document.getElementById('chat-box').style.display = 'flex';
     document.getElementById('target-name').innerText = name;
+    
+    // Для мобильных: скрываем сайдбар при открытии чата
+    if (window.innerWidth <= 600) {
+        document.getElementById('sidebar').classList.add('hidden');
+    }
+
     socket.emit('load_chat', { me: myNick, him: name });
     socket.emit('get_my_dialogs', myNick);
 }
 
-// Печатает...
-document.getElementById('msg-input').oninput = () => {
-    if(activeChat) socket.emit('typing', { from: myNick, to: activeChat });
+// Кнопка назад (для мобильных)
+document.getElementById('back-btn').onclick = () => {
+    document.getElementById('sidebar').classList.remove('hidden');
+    document.getElementById('chat-box').style.display = 'none';
+    document.getElementById('welcome').style.display = 'flex';
 };
 
-socket.on('is_typing', data => {
-    const status = document.getElementById(`status-${data.from}`);
-    if(status) {
-        status.innerText = "печатает...";
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => { status.innerText = ""; }, 2000);
-    }
-});
-
-// История и сообщения
+// Сообщения
 socket.on('chat_history', msgs => {
     const box = document.getElementById('messages');
     box.innerHTML = '';
@@ -87,18 +89,15 @@ function render(s, t, f, fn, time) {
     const box = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = `msg-row ${s === myNick ? 'me' : 'them'}`;
-    let html = `<div class="bubble">`;
-    if (f) {
-        if (f.startsWith('data:image')) html += `<img src="${f}" style="width:100%; border-radius:8px;">`;
-        else html += `<a href="${f}" download="${fn}" class="file">📁 ${fn}</a>`;
-    }
-    html += `<span>${t}</span><small class="time">${time}</small></div>`;
-    d.innerHTML = html;
+    d.innerHTML = `<div class="bubble">
+        ${f ? (f.startsWith('data:image') ? `<img src="${f}" style="width:100%;border-radius:8px;">` : `<a href="${f}" download="${fn}">📁 ${fn}</a>`) : ''}
+        <span>${t || ''}</span><small style="display:block;font-size:0.7rem;opacity:0.6;text-align:right;">${time || ''}</small>
+    </div>`;
     box.appendChild(d);
     box.scrollTop = box.scrollHeight;
 }
 
-const toBase64 = f => new Promise((res) => {
+const toBase64 = f => new Promise(res => {
     const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res(r.result);
 });
 
