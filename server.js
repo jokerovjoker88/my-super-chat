@@ -17,10 +17,8 @@ const db = new Client({
 async function boot() {
     try {
         await db.connect();
-        
-        // Создаем таблицы, если их вообще нет
         await db.query(`
-            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, avatar TEXT);
+            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, avatar TEXT, is_online BOOLEAN DEFAULT FALSE);
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
                 sender TEXT,
@@ -32,15 +30,13 @@ async function boot() {
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-
-        // ПРИНУДИТЕЛЬНО добавляем колонки, если база старая (исправляет твою ошибку)
+        // Исправляем структуру, если нужно
         await db.query(`
             ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
         `);
-
-        console.log("=== NEBULA SERVER READY & DATABASE FIXED ===");
-    } catch (e) { console.error("BOOT ERROR:", e); }
+        console.log("=== SERVER READY ===");
+    } catch (e) { console.error(e); }
 }
 boot();
 
@@ -55,18 +51,25 @@ io.on('connection', (socket) => {
         io.emit('status_update');
     });
 
-    socket.on('update_avatar', async (img) => {
-        if (socket.username) {
-            await db.query("UPDATE users SET avatar = $1 WHERE username = $2", [img, socket.username]);
-            io.emit('status_update');
-        }
+    // Поиск пользователя и создание "заглушки" в базе
+    socket.on('search_user', async (targetNick) => {
+        if (!targetNick) return;
+        // Проверяем, существует ли пользователь, если нет — создаем его
+        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [targetNick]);
+        const res = await db.query("SELECT username, avatar, is_online FROM users WHERE username = $1", [targetNick]);
+        socket.emit('user_found', res.rows[0]);
     });
 
     socket.on('get_my_dialogs', async (me) => {
         const res = await db.query(`
-            SELECT DISTINCT ON (username) username as partner, is_online, avatar,
-            (SELECT COUNT(*) FROM messages WHERE sender = username AND receiver = $1 AND is_read = FALSE) as unread
-            FROM users WHERE username != $1
+            SELECT DISTINCT ON (partner) partner, u.is_online, u.avatar,
+            (SELECT COUNT(*) FROM messages WHERE sender = partner AND receiver = $1 AND is_read = FALSE) as unread
+            FROM (
+                SELECT receiver as partner FROM messages WHERE sender = $1
+                UNION
+                SELECT sender as partner FROM messages WHERE receiver = $1
+            ) s
+            JOIN users u ON u.username = s.partner
         `, [me]);
         socket.emit('dialogs_list', res.rows);
     });
@@ -76,7 +79,6 @@ io.on('connection', (socket) => {
         const res = await db.query(`SELECT sender, content, file_data, file_name, to_char(ts, 'HH24:MI') as time FROM messages 
             WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1) ORDER BY ts ASC`, [me, him]);
         socket.emit('chat_history', res.rows);
-        io.to(him).emit('refresh_chats');
     });
 
     socket.on('send_msg', async (data) => {
