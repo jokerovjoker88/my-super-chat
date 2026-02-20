@@ -3,100 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuantumFlow Messenger</title>
+    <title>Quantum Messenger Elite</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="particles-js" class="background-particles"></div>
+    <div class="luxury-bg">
+        <div class="light-orb orb-gold"></div>
+        <div class="light-orb orb-blue"></div>
+    </div>
 
-    <div class="app-core">
-        <aside class="left-panel">
-            <div class="header-logo">
-                <div class="logo-circle"><i class="fa-solid fa-atom"></i></div>
-                <span>QUANTUM<strong>FLOW</strong></span>
-            </div>
-            
-            <div class="search-module">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" placeholder="Искать в потоках..." class="search-input">
+    <div class="main-layout">
+        <aside class="sidebar-premium">
+            <div class="sidebar-brand">
+                <div class="brand-hexagon"><i class="fa-solid fa-diamond"></i></div>
+                <span>NEBULA<strong>ELITE</strong></span>
             </div>
 
-            <nav class="flow-nav">
-                <div class="nav-section-title">АКТИВНЫЕ ПОТОКИ</div>
-                <div id="users-box" class="flow-list custom-scrollbar"></div>
-            </nav>
+            <div class="search-premium">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Поиск в системе...">
+            </div>
 
-            <div class="profile-console">
-                <div class="profile-avatar" id="user-display-avatar">?</div>
-                <div class="profile-info">
-                    <span id="user-display" class="profile-name">Инициализация...</span>
-                    <div class="status-indicator"><span class="pulse-dot"></span>Online</div>
+            <div class="users-scroll custom-scroll">
+                <div class="section-label">Активные узлы</div>
+                <div id="users-box"></div>
+            </div>
+
+            <div class="profile-dock">
+                <div class="profile-avatar-wrap">
+                    <div id="user-display-avatar" class="avatar-elite">?</div>
+                    <div class="online-ring"></div>
                 </div>
-                <button class="settings-btn"><i class="fa-solid fa-gear"></i></button>
+                <div class="profile-text">
+                    <span id="user-display">Загрузка...</span>
+                    <p>Status: Online</p>
+                </div>
+                <button class="icon-btn-settings"><i class="fa-solid fa-gear"></i></button>
             </div>
         </aside>
 
-        <main class="chat-zone">
-            <header class="chat-header-panel">
-                <div class="chat-info-block">
-                    <button id="back-btn" class="nav-back-btn" style="display:none;"><i class="fa-solid fa-arrow-left"></i></button>
-                    <div class="current-chat-meta">
-                        <h2 id="chat-title" class="chat-title-text">Центральный Канал</h2>
-                        <div class="security-status-bar"><i class="fa-solid fa-fingerprint"></i> End-to-End Encrypted</div>
+        <main class="chat-viewport">
+            <header class="chat-navbar-elite">
+                <div class="navbar-left">
+                    <button id="back-btn" class="nav-back" style="display:none;"><i class="fa-solid fa-chevron-left"></i></button>
+                    <div class="nav-titles">
+                        <h2 id="chat-title">Quantum Core</h2>
+                        <span class="encryption-badge"><i class="fa-solid fa-shield-halved"></i> 2048-bit Encrypted</span>
                     </div>
                 </div>
-                <div class="chat-actions-bar">
-                    <button class="action-icon"><i class="fa-solid fa-phone"></i></button>
-                    <button class="action-icon"><i class="fa-solid fa-video"></i></button>
-                    <button class="action-icon"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                <div class="navbar-right">
+                    <div class="active-participants">
+                        <i class="fa-solid fa-users"></i> <span id="online-count">0</span>
+                    </div>
                 </div>
             </header>
 
-            <div id="messages" class="message-stream custom-scrollbar">
+            <div id="messages" class="messages-container custom-scroll">
                 </div>
 
-            <div id="typing-box" class="typing-alert"></div>
+            <div id="typing-box" class="typing-indicator"></div>
 
-            <footer class="input-nexus">
-                <div class="input-field-group">
-                    <label class="attach-button">
-                        <i class="fa-solid fa-paperclip"></i>
+            <footer class="input-dock-area">
+                <div class="input-glass-container">
+                    <label class="btn-attach-premium">
+                        <i class="fa-solid fa-plus"></i>
                         <input type="file" id="file-input" hidden>
                     </label>
                     
-                    <textarea id="msg-input" placeholder="Введите ваше сообщение..." rows="1" class="message-input"></textarea>
+                    <textarea id="msg-input" placeholder="Напишите что-нибудь..." rows="1"></textarea>
                     
-                    <div class="input-controls">
-                        <button id="record-btn" class="mic-button"><i class="fa-solid fa-microphone"></i></button>
-                        <button id="send-btn" class="send-button"><i class="fa-solid fa-paper-plane"></i></button>
+                    <div class="input-utility-btns">
+                        <button id="record-btn" class="btn-util"><i class="fa-solid fa-microphone"></i></button>
+                        <button id="send-btn" class="btn-send-elite">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
                     </div>
                 </div>
             </footer>
         </main>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-    <script>
-        particlesJS('particles-js', {
-            "particles": {
-                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
-                "color": { "value": "#00d2ff" },
-                "shape": { "type": "circle" },
-                "opacity": { "value": 0.5, "random": false, "anim": { "enable": false } },
-                "size": { "value": 3, "random": true, "anim": { "enable": false } },
-                "line_linked": { "enable": true, "distance": 150, "color": "#00f2ff", "opacity": 0.4, "width": 1 },
-                "move": { "enable": true, "speed": 6, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false, "attract": { "enable": false, "rotateX": 600, "rotateY": 1200 } }
-            },
-            "interactivity": {
-                "detect_on": "canvas",
-                "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
-                "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "bubble": { "distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3 }, "repulse": { "distance": 200, "duration": 0.4 }, "push": { "particles_nb": 4 }, "remove": { "particles_nb": 2 } }
-            },
-            "retina_detect": true
-        });
-    </script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
