@@ -11,13 +11,10 @@ document.getElementById('my-nick').innerText = myNick;
 
 let currentRoom = null;
 
-// Статус базы данных
 socket.on('server_status', st => { document.getElementById('db-status').innerText = st; });
-
-// Грузим чаты при старте
 socket.emit('load_rooms', myNick);
 
-// Действие 1: Нажатие на "Создать/Найти"
+// Нажатие на "Создать/Найти"
 function createOrJoin() {
     const r = prompt("Название чата (любое слово):");
     if (r && r.trim()) {
@@ -25,16 +22,16 @@ function createOrJoin() {
     }
 }
 
-// Действие 2: Пригласить
+// НОВОЕ: Отправить запрос
 function inviteFriend() {
-    const f = prompt("Кого добавить? Введите ник:");
+    const f = prompt("Кому отправить запрос? Введите ник:");
     if (f && currentRoom) {
-        socket.emit('invite', { room: currentRoom, target: f.trim() });
-        alert("Запрос отправлен пользователю " + f);
+        socket.emit('send_invite', { from: myNick, to: f.trim(), room: currentRoom });
+        alert("Запрос отправлен пользователю " + f + "!");
     }
 }
 
-// Действие 3: Отправка сообщения
+// Отправка сообщения
 function sendMessage() {
     const inp = document.getElementById('msg-input');
     if (inp.value.trim() && currentRoom) {
@@ -70,17 +67,21 @@ socket.on('room_joined', data => {
     if (window.innerWidth < 768) toggleMenu();
 });
 
-// Получение нового сообщения
 socket.on('new_msg', data => {
     if (data.room === currentRoom) renderMsg(data.sender, data.text);
 });
 
-// Если нас кто-то добавил
-socket.on('invited', target => {
-    if (target === myNick) socket.emit('load_rooms', myNick);
+// НОВОЕ: Обработка входящего запроса
+socket.on('incoming_invite', data => {
+    // Проверяем, нам ли это приглашение
+    if (data.to === myNick) {
+        const accept = confirm(`Пользователь ${data.from} приглашает вас в чат "${data.room}". Присоединиться?`);
+        if (accept) {
+            socket.emit('join_room', { room: data.room, nick: myNick });
+        }
+    }
 });
 
-// Отрисовка сообщения на экране
 function renderMsg(sender, text) {
     const box = document.getElementById('chat-box');
     const d = document.createElement('div');
@@ -90,6 +91,5 @@ function renderMsg(sender, text) {
     box.scrollTop = box.scrollHeight;
 }
 
-// Энтер для отправки
 document.getElementById('msg-input').onkeydown = e => { if (e.key === 'Enter') sendMessage(); };
 function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
