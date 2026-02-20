@@ -8,7 +8,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Оптимизация: сжатие данных
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -32,6 +31,11 @@ io.on('connection', (socket) => {
         messages.push(msg);
         if (messages.length > 100) messages.shift();
         io.emit('chat message', msg);
+    });
+
+    // НОВОЕ: Передаем всем, что кто-то печатает
+    socket.on('typing', (data) => {
+        socket.broadcast.emit('user typing', { user: data.user });
     });
 
     socket.on('disconnect', () => {
