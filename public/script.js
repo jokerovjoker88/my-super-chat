@@ -1,82 +1,76 @@
 const socket = io();
-let myNick = localStorage.getItem('nebula_nick') || prompt("Введите ваш Ник:");
-if(!myNick) myNick = 'User_' + Math.floor(Math.random()*999);
-localStorage.setItem('nebula_nick', myNick);
-document.getElementById('my-id').innerText = myNick;
+let myNick = localStorage.getItem('chat_nick') || prompt("Ваш ник:");
+if(!myNick) myNick = 'User' + Math.floor(Math.random()*100);
+localStorage.setItem('chat_nick', myNick);
+document.getElementById('display-nick').innerText = myNick;
 
-let activeRoom = null;
+let currentRoom = null;
 
-// Инициализация
-const refreshRooms = () => socket.emit('fetch_rooms', myNick);
-refreshRooms();
-
-// Поиск / Создание
-function joinPrompt() {
-    const name = prompt("Название чата:");
-    if(name) socket.emit('access_room', { room: name.trim(), nick: myNick });
-}
-
-// Приглашение
-function inviteFriend() {
-    const friend = prompt("Ник пользователя для добавления:");
-    if(friend) socket.emit('invite_friend', { room: activeRoom, friend: friend.trim() });
-}
-
-// Вход в чат
-function selectChat(name) {
-    activeRoom = name;
-    document.getElementById('current-title').innerText = name;
-    document.getElementById('invite-icon').style.display = 'block';
-    document.getElementById('footer').style.display = 'flex';
-    socket.emit('join_session', { room: name });
-    refreshRooms();
-    if(window.innerWidth < 768) toggleMenu();
-}
-
-// Рендер сообщений
-socket.on('chat_history', msgs => {
-    const flow = document.getElementById('chat-flow');
-    flow.innerHTML = '';
-    msgs.forEach(m => render(m.sender, m.txt));
-});
-
-socket.on('broadcast_msg', m => {
-    if(m.room === activeRoom) render(m.nick, m.txt);
-});
-
-function render(s, t) {
-    const flow = document.getElementById('chat-flow');
-    const d = document.createElement('div');
-    const isMe = s === myNick;
-    d.className = `msg-wrap ${isMe ? 'me' : ''}`;
-    d.innerHTML = `<div class="msg"><b>${s}</b><p>${t}</p></div>`;
-    flow.appendChild(d);
-    flow.scrollTop = flow.scrollHeight;
-}
-
-// Отправка
-function send() {
-    const inp = document.getElementById('msg-input');
-    if(inp.value.trim() && activeRoom) {
-        socket.emit('push_msg', { nick: myNick, txt: inp.value, room: activeRoom });
-        inp.value = '';
+// Действия
+const actions = {
+    join: () => {
+        const name = prompt("Название чата (создать или найти):");
+        if(name) socket.emit('join_room', { room: name.trim(), nick: myNick });
+    },
+    invite: () => {
+        const target = prompt("Ник того, кого добавить в этот чат:");
+        if(target) socket.emit('add_user', { room: currentRoom, targetNick: target.trim() });
+    },
+    send: () => {
+        const input = document.getElementById('msg-input');
+        if(input.value.trim() && currentRoom) {
+            socket.emit('send_msg', { room: currentRoom, sender: myNick, text: input.value });
+            input.value = '';
+        }
     }
-}
+};
 
-// Служебные события
-socket.on('rooms_update', rooms => {
-    const list = document.getElementById('room-list');
-    list.innerHTML = '';
-    rooms.forEach(r => {
-        const btn = document.createElement('div');
-        btn.className = `room-btn ${activeRoom === r ? 'active' : ''}`;
-        btn.innerHTML = `<i class="fa-solid fa-hashtag"></i> ${r}`;
-        btn.onclick = () => selectChat(r);
-        list.appendChild(btn);
+const ui = {
+    menu: () => document.getElementById('aside').classList.toggle('active'),
+    renderMsg: (s, t) => {
+        const box = document.getElementById('chat-box');
+        const d = document.createElement('div');
+        d.className = `msg-row ${s === myNick ? 'me' : ''}`;
+        d.innerHTML = `<div class="msg-bubble"><b>${s}</b><p>${t}</p></div>`;
+        box.appendChild(d);
+        box.scrollTop = box.scrollHeight;
+    }
+};
+
+// События сокетов
+socket.emit('get_my_rooms', myNick);
+
+socket.on('rooms_list', list => {
+    const container = document.getElementById('room-list');
+    container.innerHTML = '';
+    list.forEach(name => {
+        const div = document.createElement('div');
+        div.className = `room-link ${currentRoom === name ? 'active' : ''}`;
+        div.innerHTML = `<i class="fa-solid fa-hashtag"></i> ${name}`;
+        div.onclick = () => {
+            currentRoom = name;
+            document.getElementById('chat-title').innerText = name;
+            document.getElementById('add-btn').style.display = 'block';
+            document.getElementById('input-pane').style.display = 'flex';
+            socket.emit('join_room', { room: name, nick: myNick });
+            if(window.innerWidth < 768) ui.menu();
+        };
+        container.appendChild(div);
     });
 });
 
-socket.on('access_granted', room => selectChat(room));
-socket.on('notify_invite', target => { if(target === myNick) refreshRooms(); });
+socket.on('history', data => {
+    document.getElementById('chat-box').innerHTML = '';
+    data.forEach(m => ui.renderMsg(m.sender, m.text));
+});
 
-function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
+socket.on('new_msg', m => {
+    if(m.room === currentRoom) ui.renderMsg(m.sender, m.text);
+});
+
+socket.on('check_new_rooms', target => {
+    if(target === myNick) socket.emit('get_my_rooms', myNick);
+});
+
+// Отправка по Enter
+document.getElementById('msg-input').onkeydown = (e) => { if(e.key === 'Enter') actions.send(); };
