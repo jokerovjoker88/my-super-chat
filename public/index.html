@@ -2,33 +2,33 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nebula Messenger</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nebula Cloud</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <div class="app">
-        <aside class="sidebar" id="sidebar">
-            <div class="side-head">
-                <h2>Чаты</h2>
-                <button onclick="toggleMenu()" class="mob-btn"><i class="fa-solid fa-xmark"></i></button>
+    <div class="wrapper">
+        <aside id="side">
+            <div class="side-header">
+                <h3>Мои чаты</h3>
+                <button onclick="menu()" class="mob"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <button class="add-chat-btn" onclick="createRoomPrompt()">+ Создать чат</button>
-            <div id="room-list" class="room-list"></div>
-            <div class="my-id">Ваш ник: <b id="me">?</b></div>
+            <button class="add-btn" onclick="newChat()">+ Создать чат</button>
+            <div id="room-list"></div>
+            <div class="profile">Ник: <b id="my-nick">...</b></div>
         </aside>
 
-        <main class="chat">
-            <header class="chat-head">
-                <button onclick="toggleMenu()" class="mob-btn"><i class="fa-solid fa-bars"></i></button>
-                <h2 id="cur-room-name">Выберите чат</h2>
-                <button id="add-user-btn" style="display:none" onclick="addUserPrompt()"><i class="fa-solid fa-user-plus"></i></button>
+        <main>
+            <header>
+                <button onclick="menu()" class="mob"><i class="fa-solid fa-bars"></i></button>
+                <h2 id="chat-name">Выберите чат</h2>
+                <button id="add-u" style="display:none" onclick="invite()"><i class="fa-solid fa-user-plus"></i></button>
             </header>
-            <div id="msgs" class="msgs"></div>
-            <div class="input-area" id="input-zone" style="display:none">
-                <input type="text" id="m-input" placeholder="Сообщение...">
-                <button id="s-btn"><i class="fa-solid fa-paper-plane"></i></button>
+            <div id="chat-box"></div>
+            <div class="input-wrap" id="controls" style="display:none">
+                <input type="text" id="m-text" placeholder="Сообщение..." onkeypress="enter(event)">
+                <button onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </main>
     </div>
