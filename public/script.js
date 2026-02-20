@@ -1,38 +1,41 @@
 const socket = io();
-let myNick = localStorage.getItem('m_nick');
+let myNick = localStorage.getItem('nebula_nick');
 
 if (!myNick) {
-    myNick = prompt("Ваш ник:");
-    localStorage.setItem('m_nick', myNick);
+    myNick = prompt("Придумайте ваш ник:");
+    if (!myNick) myNick = "User" + Math.floor(Math.random() * 100);
+    localStorage.setItem('nebula_nick', myNick);
 }
 
 let activeContact = null;
 
-// При входе
+// При запуске
 socket.emit('auth', myNick);
 socket.emit('get_contacts', myNick);
 
-const actions = {
-    // Найти человека и начать чат
-    startChat: () => {
-        const p = prompt("Ник собеседника:");
-        if (p && p !== myNick) {
-            activeContact = p;
-            document.getElementById('chat-name').innerText = p;
-            document.getElementById('welcome').style.display = 'none';
-            document.getElementById('chat-ui').style.display = 'flex';
-            socket.emit('get_history', { me: myNick, him: p });
-        }
-    },
-    // Отправить
-    send: () => {
-        const input = document.getElementById('inp');
-        if (input.value.trim() && activeContact) {
-            socket.emit('send', { from: myNick, to: activeContact, msg: input.value });
-            input.value = '';
-        }
+function startChat() {
+    const p = prompt("Ник собеседника:");
+    if (p && p !== myNick) {
+        openChat(p.trim());
     }
-};
+}
+
+function openChat(nick) {
+    activeContact = nick;
+    document.getElementById('chat-name').innerText = nick;
+    document.getElementById('welcome').style.display = 'none';
+    document.getElementById('chat-ui').style.display = 'flex';
+    socket.emit('get_history', { me: myNick, him: nick });
+    socket.emit('get_contacts', myNick);
+}
+
+function sendMsg() {
+    const input = document.getElementById('inp');
+    if (input.value.trim() && activeContact) {
+        socket.emit('send', { from: myNick, to: activeContact, msg: input.value });
+        input.value = '';
+    }
+}
 
 socket.on('contacts_list', list => {
     const box = document.getElementById('list');
@@ -41,13 +44,7 @@ socket.on('contacts_list', list => {
         const d = document.createElement('div');
         d.className = `item ${activeContact === nick ? 'active' : ''}`;
         d.innerText = nick;
-        d.onclick = () => {
-            activeContact = nick;
-            document.getElementById('chat-name').innerText = nick;
-            document.getElementById('welcome').style.display = 'none';
-            document.getElementById('chat-ui').style.display = 'flex';
-            socket.emit('get_history', { me: myNick, him: nick });
-        };
+        d.onclick = () => openChat(nick);
         box.appendChild(d);
     });
 });
@@ -59,7 +56,6 @@ socket.on('history', msgs => {
 });
 
 socket.on('new_msg', data => {
-    // Если сообщение для текущего открытого чата
     if (data.from === activeContact || data.to === activeContact) {
         render(data.from, data.msg);
     }
@@ -75,4 +71,4 @@ function render(s, t) {
     box.scrollTop = box.scrollHeight;
 }
 
-document.getElementById('inp').onkeydown = (e) => { if(e.key === 'Enter') actions.send(); };
+document.getElementById('inp').onkeydown = (e) => { if(e.key === 'Enter') sendMsg(); };
