@@ -1,14 +1,19 @@
 const socket = io();
 
-let myName = localStorage.getItem('chat_name') || prompt("Введите ваш ник:") || "Аноним";
+let myName = localStorage.getItem('chat_name') || prompt("Ваш ник:") || "Аноним";
 localStorage.setItem('chat_name', myName);
 document.getElementById('user-display').innerText = "Вы: " + myName;
 
 socket.emit('join', { username: myName });
 
 const messagesDiv = document.getElementById('messages');
+const msgInput = document.getElementById('msg-input');
+const typingStatus = document.getElementById('typing-status');
+const msgSound = document.getElementById('msg-sound');
+
 let isFocused = true;
 let unread = 0;
+let typingTimer;
 
 window.onfocus = () => { isFocused = true; unread = 0; document.title = "Messenger Pro"; };
 window.onblur = () => isFocused = false;
@@ -16,8 +21,19 @@ window.onblur = () => isFocused = false;
 function stringToColor(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    return `hsl(${Math.abs(hash) % 360}, 65%, 55%)`;
+    return `hsl(${Math.abs(hash) % 360}, 60%, 50%)`;
 }
+
+// Индикатор печати
+msgInput.addEventListener('input', () => {
+    socket.emit('typing', { user: myName });
+});
+
+socket.on('user typing', (data) => {
+    typingStatus.innerText = `${data.user} печатает...`;
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => { typingStatus.innerText = ''; }, 2000);
+});
 
 function addMessage(data) {
     const isMine = data.user === myName;
@@ -35,29 +51,33 @@ function addMessage(data) {
     messagesDiv.appendChild(wrapper);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-    if (!isFocused && !isMine) {
-        unread++;
-        document.title = `(${unread}) Новое сообщение!`;
+    if (!isMine) {
+        // Звук (сработает если браузер разрешил)
+        msgSound.play().catch(() => {});
+        if (!isFocused) {
+            unread++;
+            document.title = `(${unread}) Новое сообщение!`;
+        }
     }
 }
 
 function send() {
-    const input = document.getElementById('msg-input');
-    if (input.value.trim()) {
-        socket.emit('chat message', { user: myName, text: input.value });
-        input.value = "";
+    if (msgInput.value.trim()) {
+        socket.emit('chat message', { user: myName, text: msgInput.value });
+        msgInput.value = "";
+        typingStatus.innerText = ''; // Убираем статус у себя
     }
 }
 
 document.getElementById('send-btn').onclick = send;
-document.getElementById('msg-input').onkeypress = (e) => { if(e.key === 'Enter') send(); };
+msgInput.onkeypress = (e) => { if(e.key === 'Enter') send(); };
 
 socket.on('chat message', addMessage);
 socket.on('load history', (h) => { messagesDiv.innerHTML = ''; h.forEach(addMessage); });
 socket.on('update online', (users) => {
     document.getElementById('users-box').innerHTML = users.map(u => 
-        `<div style="display:flex; align-items:center; margin-bottom:10px; font-size:14px;">
-            <div style="width:10px; height:10px; background:#23a55a; border-radius:50%; margin-right:10px;"></div>
+        `<div style="display:flex; align-items:center; margin-bottom:10px; font-size:13px;">
+            <div style="width:8px; height:8px; background:#23a55a; border-radius:50%; margin-right:10px;"></div>
             ${u.name}
         </div>`).join('');
 });
