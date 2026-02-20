@@ -18,9 +18,13 @@ async function boot() {
     try {
         await db.connect();
         
-        // 1. Создаем таблицы, если их нет
+        // 1. Пытаемся создать таблицы (если их еще нет)
         await db.query(`
-            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, avatar TEXT, is_online BOOLEAN DEFAULT FALSE);
+            CREATE TABLE IF NOT EXISTS users (
+                username TEXT PRIMARY KEY, 
+                avatar TEXT, 
+                is_online BOOLEAN DEFAULT FALSE
+            );
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
                 sender TEXT,
@@ -28,19 +32,21 @@ async function boot() {
                 content TEXT,
                 file_data TEXT,
                 file_name TEXT,
+                is_read BOOLEAN DEFAULT FALSE,
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
 
-        // 2. ПРИНУДИТЕЛЬНО ДОБАВЛЯЕМ НЕДОСТАЮЩИЕ КОЛОНКИ (Исправляет твою ошибку)
-        await db.query(`
-            ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;
-            ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
-            ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
-        `);
+        // 2. ИСПРАВЛЕНИЕ: Добавляем колонку is_read, если она пропала (фикс твоей ошибки)
+        await db.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;`);
+        // Также проверим остальные важные колонки на всякий случай
+        await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;`);
+        await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;`);
 
-        console.log("=== SERVER ONLINE & DATABASE PATCHED ===");
-    } catch (e) { console.error("BOOT ERROR:", e); }
+        console.log("=== SERVER READY: DATABASE PATCHED ===");
+    } catch (e) { 
+        console.error("DB BOOT ERROR:", e); 
+    }
 }
 boot();
 
@@ -55,6 +61,7 @@ io.on('connection', (socket) => {
         io.emit('status_update');
     });
 
+    // ПОИСК ПО НИКУ: Если юзера нет, создаем его, чтобы можно было начать чат
     socket.on('search_user', async (targetNick) => {
         if (!targetNick) return;
         await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [targetNick]);
@@ -77,7 +84,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('load_chat', async ({ me, him }) => {
-        // Здесь была ошибка: колонка is_read не существовала
+        // Та самая команда, которая вызывала ошибку:
         await db.query("UPDATE messages SET is_read = TRUE WHERE sender = $1 AND receiver = $2", [him, me]);
         const res = await db.query(`SELECT sender, content, file_data, file_name, to_char(ts, 'HH24:MI') as time FROM messages 
             WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1) ORDER BY ts ASC`, [me, him]);
