@@ -1,29 +1,42 @@
 :root { --bg: #0e1621; --side: #17212b; --acc: #2b5278; --text: #fff; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto; overflow: hidden; }
-.app { display: flex; height: 100vh; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
+.app { display: flex; height: 100vh; width: 100vw; }
 
-/* Список чатов */
-.sidebar { width: 320px; background: var(--side); display: flex; flex-direction: column; border-right: 1px solid #080c11; }
+/* Сайдбар */
+.sidebar { width: 320px; background: var(--side); display: flex; flex-direction: column; border-right: 1px solid #000; transition: 0.3s; }
 .search-area { padding: 15px; }
-.search-area input { width: 90%; padding: 10px 15px; border-radius: 20px; border: none; background: #242f3d; color: #fff; outline: none; }
-.dialog-item { padding: 10px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-bottom: 1px solid #0e1621; }
+.search-wrapper { display: flex; background: #242f3d; border-radius: 20px; padding: 5px 15px; align-items: center; }
+.search-wrapper input { flex: 1; background: none; border: none; color: #fff; outline: none; padding: 8px; font-size: 16px; }
+#search-btn { background: none; border: none; color: #5085b1; cursor: pointer; font-size: 1.1rem; }
+
+.dialogs { flex: 1; overflow-y: auto; }
+.dialog-item { padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-bottom: 1px solid #0e1621; }
 .dialog-item.active { background: var(--acc); }
-.ava { width: 48px; height: 48px; background: #5085b1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
-.d-info { flex: 1; }
-.typing-status { font-size: 0.8rem; color: #5085b1; height: 1rem; }
-.active .typing-status { color: #fff; opacity: 0.7; }
+.ava { width: 45px; height: 45px; background: #5085b1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
 /* Чат */
-.chat-view { flex: 1; display: flex; flex-direction: column; background: #0e1621; background-image: url('https://www.transparenttextures.com/patterns/carbon-fibre.png'); }
-.chat-header { padding: 10px 20px; background: var(--side); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-.messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 5px; }
-.msg-row { display: flex; width: 100%; margin-bottom: 4px; }
+.chat-view { flex: 1; display: flex; flex-direction: column; background: #0e1621; position: relative; }
+.centered { margin: auto; opacity: 0.5; }
+.chat-header { padding: 10px 20px; background: var(--side); display: flex; align-items: center; gap: 15px; font-weight: bold; border-bottom: 1px solid #000; }
+.messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+.msg-row { display: flex; width: 100%; }
 .msg-row.me { justify-content: flex-end; }
-.bubble { max-width: 70%; padding: 8px 12px; border-radius: 15px; font-size: 0.95rem; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-.me .bubble { background: #2b5278; border-bottom-right-radius: 4px; }
-.them .bubble { background: #182533; border-bottom-left-radius: 4px; }
-.time { display: block; font-size: 0.7rem; opacity: 0.6; text-align: right; margin-top: 4px; }
+.bubble { max-width: 75%; padding: 8px 12px; border-radius: 12px; background: #182533; position: relative; }
+.me .bubble { background: var(--acc); border-bottom-right-radius: 2px; }
+.them .bubble { border-bottom-left-radius: 2px; }
 
-.input-bar { padding: 10px 20px; background: var(--side); display: flex; align-items: center; gap: 15px; }
-.input-bar input { flex: 1; background: none; border: none; color: #fff; outline: none; font-size: 1rem; }
-#send-btn { color: #5085b1; font-size: 1.5rem; border: none; background: none; cursor: pointer; }
+.input-bar { padding: 10px 15px; background: var(--side); display: flex; align-items: center; gap: 10px; }
+.input-bar input { flex: 1; background: none; border: none; color: #fff; outline: none; font-size: 16px; }
+.attach { color: #707579; font-size: 1.3rem; cursor: pointer; }
+#send-btn { color: #5085b1; font-size: 1.5rem; background: none; border: none; cursor: pointer; }
+
+/* Мобильная адаптация */
+.mobile-only { display: none; }
+@media (max-width: 600px) {
+    .sidebar { width: 100%; position: absolute; z-index: 10; height: 100%; }
+    .sidebar.hidden { transform: translateX(-100%); }
+    .mobile-only { display: block; background: none; border: none; color: #5085b1; font-size: 1.2rem; }
+    .bubble { max-width: 85%; }
+}
+.user-info { padding: 10px; text-align: center; font-size: 0.8rem; opacity: 0.5; border-top: 1px solid #000; }
