@@ -1,32 +1,95 @@
-:root { --bg: #0e1621; --side: #17212b; --acc: #2b5278; --text: #fff; --online: #4caf50; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
-.app { display: flex; height: 100vh; }
-.sidebar { width: 320px; background: var(--side); display: flex; flex-direction: column; border-right: 1px solid #000; }
-.my-header { padding: 15px; display: flex; align-items: center; gap: 12px; background: #242f3d; }
-#my-ava { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--acc); }
-.search-box { padding: 10px; display: flex; gap: 8px; background: #1c2733; }
-.search-box input { flex: 1; background: #242f3d; border: 1px solid #333; color: #fff; padding: 8px; border-radius: 8px; outline: none; }
-#search-btn { background: var(--acc); border: none; color: white; width: 40px; border-radius: 8px; cursor: pointer; }
-.dialogs { flex: 1; overflow-y: auto; }
-.dialog-item { padding: 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-bottom: 1px solid #0e1621; }
-.dialog-item.active { background: var(--acc); }
-.ava-wrap { position: relative; width: 45px; height: 45px; }
-.ava-wrap img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-.ava-wrap.on::after { content: ''; position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; background: var(--online); border-radius: 50%; border: 2px solid var(--side); }
-.badge { background: #5085b1; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: auto; }
-.chat-view { flex: 1; display: flex; flex-direction: column; }
-.centered { margin: auto; opacity: 0.4; text-align: center; }
-.chat-header { padding: 15px; background: var(--side); display: flex; align-items: center; gap: 15px; font-weight: bold; }
-.messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
-.msg-row { display: flex; width: 100%; }
-.msg-row.me { justify-content: flex-end; }
-.bubble { max-width: 75%; padding: 8px 12px; border-radius: 12px; background: #182533; }
-.me .bubble { background: var(--acc); }
-.msg-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; }
-.msg-meta small { font-size: 0.65rem; opacity: 0.6; }
-.status-tick { font-size: 0.7rem; color: #40a7e3; }
-.input-bar { padding: 12px; background: var(--side); display: flex; align-items: center; gap: 12px; }
-.input-bar input { flex: 1; background: none; border: none; color: #fff; font-size: 16px; outline: none; }
-#send-btn, .attach { color: #5085b1; font-size: 1.4rem; cursor: pointer; background: none; border: none; }
-.mobile-only { display: none; }
-@media (max-width: 600px) { .sidebar { width: 100%; } .mobile-only { display: block; } }
+/* Основные переменные темы (Telegram Dark Style) */
+:root {
+    --bg-color: #0e1621;
+    --sidebar-color: #17212b;
+    --active-item: #2b5278;
+    --text-color: #ffffff;
+    --text-dim: #7f91a4;
+    --accent-color: #40a7e3;
+    --online-color: #4caf50;
+    --msg-in: #182533;
+    --msg-out: #2b5278;
+}
+
+/* Общие стили */
+body {
+    margin: 0;
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+}
+
+.app {
+    display: flex;
+    height: 100vh;
+}
+
+/* Боковая панель (Список чатов) */
+.sidebar {
+    width: 320px;
+    background: var(--sidebar-color);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(0,0,0,0.2);
+}
+
+.my-header {
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #242f3d;
+}
+
+.ava-box img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent-color);
+    cursor: pointer;
+}
+
+.search-box {
+    padding: 10px;
+    display: flex;
+    gap: 8px;
+    background: #1c2733;
+}
+
+.search-box input {
+    flex: 1;
+    background: #242f3d;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 20px;
+    outline: none;
+}
+
+#search-btn {
+    background: var(--accent-color);
+    border: none;
+    color: white;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#search-btn:hover { opacity: 0.8; }
+
+.dialogs {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.dialog-item {
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor:
