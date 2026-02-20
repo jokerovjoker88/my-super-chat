@@ -18,11 +18,7 @@ async function boot() {
     try {
         await db.connect();
         await db.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                username TEXT PRIMARY KEY, 
-                avatar TEXT, 
-                is_online BOOLEAN DEFAULT FALSE
-            );
+            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, avatar TEXT, is_online BOOLEAN DEFAULT FALSE);
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
                 sender TEXT REFERENCES users(username),
@@ -34,85 +30,59 @@ async function boot() {
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        console.log("=== NEBULA ULTIMATE READY ===");
-    } catch (e) { 
-        console.error("DB Boot Error:", e); 
-    }
+        console.log("=== NEBULA CORE READY ===");
+    } catch (e) { console.error("DB Error:", e); }
 }
 boot();
 
 io.on('connection', (socket) => {
     socket.on('auth', async (nick) => {
         if (!nick) return;
-        try {
-            await db.query("INSERT INTO users (username, is_online) VALUES ($1, TRUE) ON CONFLICT (username) DO UPDATE SET is_online = TRUE", [nick]);
-            socket.username = nick;
-            socket.join(nick);
-            
-            const user = await db.query("SELECT avatar FROM users WHERE username = $1", [nick]);
-            socket.emit('auth_ok', { avatar: user.rows[0]?.avatar });
-            io.emit('status_update', { user: nick, online: true });
-        } catch (e) { console.error(e); }
+        await db.query("INSERT INTO users (username, is_online) VALUES ($1, TRUE) ON CONFLICT (username) DO UPDATE SET is_online = TRUE", [nick]);
+        socket.username = nick;
+        socket.join(nick);
+        const user = await db.query("SELECT avatar FROM users WHERE username = $1", [nick]);
+        socket.emit('auth_ok', { avatar: user.rows[0]?.avatar });
+        io.emit('status_update', { user: nick, online: true });
     });
 
     socket.on('update_avatar', async (img) => {
-        if (!socket.username) return;
-        await db.query("UPDATE users SET avatar = $1 WHERE username = $2", [img, socket.username]);
-        io.emit('avatar_changed', { user: socket.username, avatar: img });
+        if (socket.username) await db.query("UPDATE users SET avatar = $1 WHERE username = $2", [img, socket.username]);
     });
 
     socket.on('get_my_dialogs', async (me) => {
-        try {
-            const res = await db.query(`
-                SELECT DISTINCT ON (partner) 
-                    partner, u.is_online, u.avatar,
-                    (SELECT COUNT(*) FROM messages WHERE sender = partner AND receiver = $1 AND is_read = FALSE) as unread
-                FROM (
-                    SELECT receiver as partner FROM messages WHERE sender = $1
-                    UNION
-                    SELECT sender as partner FROM messages WHERE receiver = $1
-                ) s JOIN users u ON u.username = s.partner
-            `, [me]);
-            socket.emit('dialogs_list', res.rows);
-        } catch (e) { console.error(e); }
+        const res = await db.query(`
+            SELECT DISTINCT ON (partner) partner, u.is_online, u.avatar,
+            (SELECT COUNT(*) FROM messages WHERE sender = partner AND receiver = $1 AND is_read = FALSE) as unread
+            FROM (SELECT receiver as partner FROM messages WHERE sender = $1 UNION SELECT sender as partner FROM messages WHERE receiver = $1) s 
+            JOIN users u ON u.username = s.partner
+        `, [me]);
+        socket.emit('dialogs_list', res.rows);
     });
 
     socket.on('load_chat', async ({ me, him }) => {
-        try {
-            await db.query("UPDATE messages SET is_read = TRUE WHERE sender = $1 AND receiver = $2", [him, me]);
-            const res = await db.query(`
-                SELECT sender, content, file_data, file_name, to_char(ts, 'HH24:MI') as time 
-                FROM messages WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1)
-                ORDER BY ts ASC
-            `, [me, him]);
-            socket.emit('chat_history', res.rows);
-            io.to(him).emit('refresh_chats');
-        } catch (e) { console.error(e); }
+        await db.query("UPDATE messages SET is_read = TRUE WHERE sender = $1 AND receiver = $2", [him, me]);
+        const res = await db.query(`SELECT sender, content, file_data, file_name, to_char(ts, 'HH24:MI') as time FROM messages 
+            WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1) ORDER BY ts ASC`, [me, him]);
+        socket.emit('chat_history', res.rows);
+        io.to(him).emit('refresh_chats');
     });
 
     socket.on('send_msg', async (data) => {
-        try {
-            await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [data.to]);
-            await db.query(
-                "INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
-                [data.from, data.to, data.text, data.file || null, data.fileName || null]
-            );
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            io.to(data.from).to(data.to).emit('new_msg', { ...data, time });
-            io.to(data.to).emit('refresh_chats');
-        } catch (e) { console.error(e); }
+        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [data.to]);
+        await db.query("INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
+            [data.from, data.to, data.text, data.file || null, data.fileName || null]);
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        io.to(data.from).to(data.to).emit('new_msg', { ...data, time });
+        io.to(data.to).emit('refresh_chats');
     });
 
     socket.on('disconnect', async () => {
         if (socket.username) {
-            try {
-                await db.query("UPDATE users SET is_online = FALSE WHERE username = $1", [socket.username]);
-                io.emit('status_update', { user: socket.username, online: false });
-            } catch (e) { console.error(e); }
+            await db.query("UPDATE users SET is_online = FALSE WHERE username = $1", [socket.username]);
+            io.emit('status_update', { user: socket.username, online: false });
         }
     });
 });
 
-server.listen(process.env.PORT || 10000, '0.0.0.0', () => {
-    console.log("Server is running on port", process.env.PORT || 10000);
-});
+server.listen(process.env.PORT || 10000, '0.0.0.0');
