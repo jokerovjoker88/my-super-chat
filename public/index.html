@@ -3,43 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nebula Pro</title>
+    <title>Nebula Messenger</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div class="app">
         <aside class="sidebar" id="sidebar">
-            <div class="search-area">
-                <div class="search-wrapper">
-                    <input type="text" id="user-search" placeholder="Ник друга..." inputmode="search">
-                    <button id="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <div class="my-header">
+                <label class="ava-box">
+                    <img id="my-ava" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
+                    <input type="file" id="ava-input" hidden accept="image/*">
+                </label>
+                <div class="my-info">
+                    <b id="my-name">...</b>
+                    <small>online</small>
                 </div>
             </div>
+            <div class="search-box">
+                <input type="text" id="user-search" placeholder="Поиск ника..." inputmode="search">
+                <button id="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
             <div id="dialogs" class="dialogs"></div>
-            <div class="user-info">Вы: <b id="my-name">...</b></div>
         </aside>
 
         <main class="chat-view">
-            <div id="welcome" class="centered">Выберите, кому написать</div>
-            
+            <div id="welcome" class="centered">Выберите чат</div>
             <div id="chat-box" style="display: none; flex-direction: column; height: 100%;">
                 <header class="chat-header">
                     <button id="back-btn" class="mobile-only"><i class="fa-solid fa-arrow-left"></i></button>
-                    <span id="target-name">...</span>
+                    <div class="header-user">
+                        <span id="target-name">...</span>
+                        <small id="target-status"></small>
+                    </div>
                 </header>
                 <div id="messages" class="messages"></div>
                 <footer class="input-bar">
-                    <label class="attach">
-                        <i class="fa-solid fa-paperclip"></i>
-                        <input type="file" id="file-input" hidden>
-                    </label>
+                    <label class="attach"><i class="fa-solid fa-paperclip"></i><input type="file" id="file-input" hidden></label>
                     <input type="text" id="msg-input" placeholder="Сообщение...">
                     <button id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                 </footer>
             </div>
         </main>
     </div>
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
