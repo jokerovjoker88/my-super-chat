@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nebula Telegram 10%</title>
+    <title>Nebula Chat</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -18,27 +18,19 @@
                 <div class="my-info"><b id="my-name">...</b></div>
             </div>
             <div class="search-box">
-                <input type="text" id="user-search" placeholder="Поиск никнейма...">
+                <input type="text" id="user-search" placeholder="Поиск по нику...">
                 <button id="search-btn"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="dialogs" class="dialogs"></div>
         </aside>
-
         <main class="chat-view">
-            <div id="welcome" class="centered">Выберите чат для общения</div>
+            <div id="welcome" class="centered">Найдите собеседника по никнейму</div>
             <div id="chat-box" style="display: none; flex-direction: column; height: 100%;">
                 <header class="chat-header">
                     <button id="back-btn" class="mobile-only"><i class="fa-solid fa-arrow-left"></i></button>
-                    <div class="target-info">
-                        <span id="target-name">...</span>
-                        <small id="target-status"></small>
-                    </div>
+                    <span id="target-name">...</span>
                 </header>
                 <div id="messages" class="messages"></div>
-                <div id="reply-preview" style="display:none;" class="reply-bar">
-                    <div id="reply-text-preview"></div>
-                    <button onclick="cancelReply()"><i class="fa-solid fa-xmark"></i></button>
-                </div>
                 <footer class="input-bar">
                     <label class="attach"><i class="fa-solid fa-paperclip"></i><input type="file" id="file-input" hidden></label>
                     <input type="text" id="msg-input" placeholder="Сообщение...">
