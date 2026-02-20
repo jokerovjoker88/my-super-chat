@@ -14,11 +14,11 @@ const db = new Client({
     ssl: { rejectUnauthorized: false }
 });
 
-async function boot() {
+async function start() {
     try {
         await db.connect();
         await db.query(`
-            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY);
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
                 sender TEXT REFERENCES users(username),
@@ -29,34 +29,30 @@ async function boot() {
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        console.log("=== TG ENGINE ONLINE ===");
-    } catch (e) { console.error(e); }
+        console.log("=== NEBULA CORE v4 ONLINE ===");
+    } catch (e) { console.error("DB Error:", e); }
 }
-boot();
+start();
 
 io.on('connection', (socket) => {
     socket.on('auth', async (nick) => {
-        if(!nick) return;
-        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT (username) DO UPDATE SET last_seen = NOW()", [nick]);
+        if (!nick) return;
+        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [nick]);
         socket.username = nick;
         socket.join(nick);
         socket.emit('auth_ok');
     });
 
-    // Поиск любого пользователя
     socket.on('search_user', async (target) => {
+        if (!target) return;
         await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [target]);
         socket.emit('user_found', target);
     });
 
-    // Получение диалогов (сортировка по времени последнего сообщения)
     socket.on('get_my_dialogs', async (me) => {
         const res = await db.query(`
-            SELECT DISTINCT ON (partner) partner FROM (
-                SELECT receiver as partner, ts FROM messages WHERE sender = $1
-                UNION
-                SELECT sender as partner, ts FROM messages WHERE receiver = $1
-            ) AS sub ORDER BY partner, ts DESC
+            SELECT DISTINCT CASE WHEN sender = $1 THEN receiver ELSE sender END as partner
+            FROM messages WHERE sender = $1 OR receiver = $1
         `, [me]);
         socket.emit('dialogs_list', res.rows);
     });
@@ -70,20 +66,17 @@ io.on('connection', (socket) => {
         socket.emit('chat_history', res.rows);
     });
 
-    // Логика "Печатает..."
-    socket.on('typing', ({ from, to }) => {
-        io.to(to).emit('is_typing', { from });
-    });
-
     socket.on('send_msg', async (data) => {
-        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [data.to]);
-        await db.query(
-            "INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
-            [data.from, data.to, data.text, data.file || null, data.fileName || null]
-        );
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        io.to(data.from).to(data.to).emit('new_msg', { ...data, time });
-        io.to(data.to).emit('refresh_dialogs');
+        try {
+            await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [data.to]);
+            await db.query(
+                "INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
+                [data.from, data.to, data.text, data.file || null, data.fileName || null]
+            );
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            io.to(data.from).to(data.to).emit('new_msg', { ...data, time });
+            io.to(data.to).emit('refresh_dialogs');
+        } catch (e) { console.log(e); }
     });
 });
 
