@@ -7,78 +7,65 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-app.use(express.static('public'));
-
 const db = new Client({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-async function boot() {
+async function init() {
     try {
         await db.connect();
-        // Создаем таблицы с правильной логикой связей
+        // Всего одна таблица для всех сообщений
         await db.query(`
-            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY);
-            CREATE TABLE IF NOT EXISTS chats (chat_id TEXT PRIMARY KEY, type TEXT DEFAULT 'private');
-            CREATE TABLE IF NOT EXISTS chat_members (chat_id TEXT, username TEXT, PRIMARY KEY(chat_id, username));
-            CREATE TABLE IF NOT EXISTS messages (id SERIAL, chat_id TEXT, sender TEXT, text TEXT, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE IF NOT EXISTS messages (
+                id SERIAL PRIMARY KEY,
+                sender TEXT,
+                receiver TEXT,
+                txt TEXT,
+                ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
         `);
-        console.log("=== NEBULA SYSTEM ONLINE ===");
-    } catch (e) { console.error("CRITICAL DB ERROR", e); }
+        console.log("DB Ready");
+    } catch (e) { console.log("DB Error", e); }
 }
-boot();
+init();
+
+app.use(express.static('public'));
 
 io.on('connection', (socket) => {
-    // 1. Авторизация и регистрация
-    socket.on('login', async (nick) => {
-        try {
-            await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [nick]);
-            socket.username = nick;
-            socket.join(nick); // Личная комната для уведомлений
-            console.log(`User ${nick} authorized`);
-            socket.emit('login_success');
-        } catch (e) { console.log(e); }
+    // Авторизация
+    socket.on('auth', (nick) => {
+        socket.join(nick);
+        console.log(nick + " online");
     });
 
-    // 2. Получение списка диалогов
-    socket.on('fetch_chats', async (nick) => {
+    // Получить список тех, с кем я уже переписывался
+    socket.on('get_contacts', async (myNick) => {
         const res = await db.query(`
-            SELECT m2.chat_id, m2.username as partner
-            FROM chat_members m1
-            JOIN chat_members m2 ON m1.chat_id = m2.chat_id
-            WHERE m1.username = $1 AND m2.username != $1
-        `, [nick]);
-        socket.emit('update_chats', res.rows);
+            SELECT DISTINCT CASE WHEN sender = $1 THEN receiver ELSE sender END as contact
+            FROM messages WHERE sender = $1 OR receiver = $1
+        `, [myNick]);
+        socket.emit('contacts_list', res.rows.map(r => r.contact));
     });
 
-    // 3. Создание нового чата (Поиск ника)
-    socket.on('create_chat', async ({ me, partner }) => {
-        try {
-            const chatId = [me, partner].sort().join('_');
-            await db.query("INSERT INTO chats (chat_id) VALUES ($1) ON CONFLICT DO NOTHING", [chatId]);
-            await db.query("INSERT INTO chat_members (chat_id, username) VALUES ($1, $2) ON CONFLICT DO NOTHING", [chatId, me]);
-            await db.query("INSERT INTO chat_members (chat_id, username) VALUES ($1, $2) ON CONFLICT DO NOTHING", [chatId, partner]);
-            
-            // Уведомляем обоих участников
-            io.to(me).to(partner).emit('chat_created', chatId);
-        } catch (e) { console.log(e); }
+    // Получить историю с конкретным человеком
+    socket.on('get_history', async ({ me, him }) => {
+        const res = await db.query(`
+            SELECT sender, txt FROM messages 
+            WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1)
+            ORDER BY ts ASC
+        `, [me, him]);
+        socket.emit('history', res.rows);
     });
 
-    // 4. Вход в конкретный чат
-    socket.on('open_chat', async (chatId) => {
-        socket.join(chatId);
-        const res = await db.query("SELECT sender, text FROM messages WHERE chat_id = $1 ORDER BY ts ASC", [chatId]);
-        socket.emit('load_history', res.rows);
-    });
-
-    // 5. Отправка сообщения
-    socket.on('send_message', async (data) => {
-        try {
-            await db.query("INSERT INTO messages (chat_id, sender, text) VALUES ($1, $2, $3)", [data.chatId, data.sender, data.text]);
-            io.to(data.chatId).emit('new_message', data);
-        } catch (e) { console.log(e); }
+    // Отправить сообщение
+    socket.on('send', async (data) => {
+        await db.query("INSERT INTO messages (sender, receiver, txt) VALUES ($1, $2, $3)", 
+        [data.from, data.to, data.msg]);
+        
+        // Шлем обоим участникам
+        io.to(data.from).to(data.to).emit('new_msg', data);
     });
 });
 
-server.listen(process.env.PORT || 10000, '0.0.0.0');
+server.listen(process.env.PORT || 10000);
