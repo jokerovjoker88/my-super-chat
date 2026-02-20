@@ -3,30 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula Telegram</title>
+    <title>Nebula Core</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <div class="messenger">
-        <aside class="contacts" id="sidebar">
-            <div class="search-box">
-                <input type="text" id="find-user" placeholder="Поиск ника...">
-                <button onclick="app.findUser()"><i class="fa-solid fa-plus"></i></button>
-            </div>
+    <div class="app-container">
+        <aside class="sidebar">
+            <header class="side-header">
+                <h3>Nebula</h3>
+                <button onclick="actions.findAndStart()" class="circle-btn"><i class="fa-solid fa-pen-to-square"></i></button>
+            </header>
             <div id="chat-list" class="chat-list"></div>
+            <div class="user-footer">@<span id="my-name-display"></span></div>
         </aside>
 
-        <main class="chat-area">
-            <header id="chat-header">Выберите чат</header>
-            <div id="messages" class="messages"></div>
-            <div class="input-zone" id="input-zone" style="display:none">
-                <input type="text" id="m-input" placeholder="Написать сообщение...">
-                <button onclick="app.send()"><i class="fa-solid fa-paper-plane"></i></button>
+        <main class="content">
+            <div id="welcome-screen" class="centered">
+                <i class="fa-solid fa-comments"></i>
+                <p>Выберите чат или найдите собеседника</p>
+            </div>
+
+            <div id="chat-main" style="display:none; flex-direction:column; height:100%;">
+                <header class="chat-header">
+                    <span id="chat-target">Имя...</span>
+                </header>
+                <div id="msg-flow" class="msg-flow"></div>
+                <div class="input-area">
+                    <input type="text" id="m-input" placeholder="Написать сообщение...">
+                    <button onclick="actions.send()"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
             </div>
         </main>
     </div>
     <script src="/socket.io/socket.io.js"></script>
+    <script>document.getElementById('my-name-display').innerText = localStorage.getItem('nebula_user');</script>
     <script src="script.js"></script>
 </body>
 </html>
