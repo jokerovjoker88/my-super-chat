@@ -34,7 +34,7 @@ async function boot() {
             ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
         `);
         console.log("=== SERVER ONLINE ===");
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("DB BOOT ERROR:", e); }
 }
 boot();
 
@@ -79,4 +79,18 @@ io.on('connection', (socket) => {
 
     socket.on('send_msg', async (data) => {
         await db.query("INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
-            [data.from, data.to, data.text, data.
+            [data.from, data.to, data.text, data.file || null, data.fileName || null]);
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        io.to(data.from).to(data.to).emit('new_msg', { ...data, time });
+    });
+
+    socket.on('disconnect', async () => {
+        if (socket.username) {
+            await db.query("UPDATE users SET is_online = FALSE WHERE username = $1", [socket.username]);
+            io.emit('status_update');
+        }
+    });
+});
+
+server.listen(process.env.PORT || 10000, '0.0.0.0');
+// КОНЕЦ ФАЙЛА - ПРОВЕРЬ, ЧТО ЭТА СТРОКА ЕСТЬ
