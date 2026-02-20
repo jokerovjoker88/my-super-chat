@@ -1,45 +1,37 @@
-<!DOCTYPE html>
+М<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula Messenger</title>
+    <title>Nebula Pro</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <div class="tg-container">
-        <aside class="tg-aside">
-            <div class="aside-header">
-                <div class="search-bar">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="user-search" placeholder="Поиск ника...">
-                </div>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="search-area">
+                <input type="text" id="user-search" placeholder="Поиск ника (Enter)...">
             </div>
-            <div id="dialogs" class="dialogs-list"></div>
-            <div class="me-tag">Вы: <b id="my-nick-display">...</b></div>
+            <div id="dialogs" class="dialogs"></div>
+            <div class="user-info">Вы: <b id="my-name">...</b></div>
         </aside>
 
-        <main class="tg-main">
-            <div id="empty-state" class="empty-screen">
-                <div class="hint">Выберите, кому написать</div>
-            </div>
-
-            <div id="chat-window" style="display: none;">
+        <main class="chat-view">
+            <div id="welcome" class="centered">Выберите чат для общения</div>
+            
+            <div id="chat-box" style="display: none; flex-direction: column; height: 100%;">
                 <header class="chat-header">
-                    <div class="chat-info">
-                        <span id="chat-with-name">...</span>
-                        <small>online</small>
-                    </div>
+                    <span id="target-name">...</span>
                 </header>
-                <div id="messages" class="messages-area"></div>
-                <footer class="chat-footer">
-                    <label class="file-btn">
+                <div id="messages" class="messages"></div>
+                <footer class="input-bar">
+                    <label class="attach">
                         <i class="fa-solid fa-paperclip"></i>
                         <input type="file" id="file-input" hidden>
                     </label>
-                    <input type="text" id="msg-input" placeholder="Написать сообщение...">
-                    <button id="send-btn"><i class="fa-solid fa-circle-arrow-up"></i></button>
+                    <input type="text" id="msg-input" placeholder="Сообщение...">
+                    <button id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                 </footer>
             </div>
         </main>
