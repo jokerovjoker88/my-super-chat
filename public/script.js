@@ -1,68 +1,88 @@
 const socket = io();
 let myName = localStorage.getItem('chat_name') || prompt("Ваш ник:") || "Аноним";
 localStorage.setItem('chat_name', myName);
-document.getElementById('user-display').innerText = "Вы: " + myName;
 
 let currentRoom = 'general';
 const messagesDiv = document.getElementById('messages');
 const msgInput = document.getElementById('msg-input');
-const chatTitle = document.getElementById('chat-title');
-const backBtn = document.getElementById('back-btn');
+const fileInput = document.getElementById('file-input');
+const recordBtn = document.getElementById('record-btn');
 
-socket.emit('join', { username: myName });
+let mediaRecorder;
+let audioChunks = [];
 
-// Функция для смены комнаты
-function joinPrivateChat(targetUser) {
-    if (targetUser === myName) return;
-    
-    // Создаем уникальное имя комнаты (сортируем имена, чтобы у обоих была одна комната)
-    currentRoom = [myName, targetUser].sort().join('_');
-    chatTitle.innerText = `Приват с ${targetUser}`;
-    backBtn.style.display = 'block';
-    messagesDiv.innerHTML = ''; // Чистим экран для привата
-    socket.emit('join room', currentRoom);
-}
-
-backBtn.onclick = () => {
-    currentRoom = 'general';
-    chatTitle.innerText = 'Общий чат';
-    backBtn.style.display = 'none';
-    messagesDiv.innerHTML = '';
-    socket.emit('join room', 'general');
+// --- ОТПРАВКА ФАЙЛОВ ---
+fileInput.onchange = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+        socket.emit('chat message', {
+            user: myName,
+            file: reader.result,
+            fileName: file.name,
+            fileType: file.type,
+            room: currentRoom
+        });
+    };
+    reader.readAsDataURL(file);
 };
 
-function send() {
-    if (msgInput.value.trim()) {
-        socket.emit('chat message', { user: myName, text: msgInput.value, room: currentRoom });
-        msgInput.value = "";
+// --- ГОЛОСОВЫЕ СООБЩЕНИЯ ---
+recordBtn.onclick = async () => {
+    if (!mediaRecorder || mediaRecorder.state === "inactive") {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const reader = new FileReader();
+            reader.onload = () => {
+                socket.emit('chat message', { user: myName, audio: reader.result, room: currentRoom });
+            };
+            reader.readAsDataURL(audioBlob);
+            recordBtn.classList.remove('recording');
+        };
+        
+        mediaRecorder.start();
+        recordBtn.classList.add('recording');
+    } else {
+        mediaRecorder.stop();
     }
-}
+};
 
-msgInput.addEventListener('input', () => socket.emit('typing', { user: myName, room: currentRoom }));
-
+// --- ОТОБРАЖЕНИЕ СООБЩЕНИЙ ---
 socket.on('chat message', (data) => {
-    if (data.room !== currentRoom) return; // Не показываем сообщения из других комнат
+    if (data.room !== currentRoom) return;
     const isMine = data.user === myName;
     const wrapper = document.createElement('div');
     wrapper.className = `message-wrapper ${isMine ? 'my-wrapper' : ''}`;
+    
+    let content = `<div>${data.text || ''}</div>`;
+    
+    // Если это картинка
+    if (data.file && data.fileType.startsWith('image')) {
+        content = `<img src="${data.file}" class="attachment-img">`;
+    } 
+    // Если это файл
+    else if (data.file) {
+        content = `<a href="${data.file}" download="${data.fileName}" class="attachment-file">📁 ${data.fileName}</a>`;
+    }
+    // Если это голосовое
+    else if (data.audio) {
+        content = `<audio src="${data.audio}" controls style="max-width: 200px; height: 35px;"></audio>`;
+    }
+
     wrapper.innerHTML = `
-        <div class="avatar" style="background: gray">${data.user[0].toUpperCase()}</div>
+        <div class="avatar" style="background: #5865f2">${data.user[0]}</div>
         <div class="message ${isMine ? 'my-message' : 'other-message'}">
-            <span class="msg-user">${data.user} <span class="time">${data.time}</span></span>
-            <div>${data.text}</div>
+            <span class="msg-user">${data.user}</span>
+            ${content}
         </div>
     `;
     messagesDiv.appendChild(wrapper);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    if(!isMine) document.getElementById('msg-sound').play().catch(()=>{});
 });
 
-socket.on('update online', (users) => {
-    document.getElementById('users-box').innerHTML = users.map(u => 
-        `<div class="user-item" onclick="joinPrivateChat('${u.name}')">
-            <span class="status-dot"></span> ${u.name} ${u.name === myName ? '(Вы)' : ''}
-        </div>`).join('');
-});
-
-document.getElementById('send-btn').onclick = send;
-msgInput.onkeypress = (e) => { if(e.key === 'Enter') send(); };
+// Остальные функции (join, typing, update online) оставь как в прошлой версии
