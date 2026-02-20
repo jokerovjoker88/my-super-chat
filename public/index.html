@@ -3,39 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nebula Network</title>
+    <title>Nebula Elite</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <div class="wrapper">
-        <aside id="side">
-            <div class="side-header">
-                <h3>Мои Каналы</h3>
-                <button onclick="menu()" class="mob"><i class="fa-solid fa-xmark"></i></button>
+    <div class="layout">
+        <aside id="sidebar">
+            <div class="side-top">
+                <h2>Nebula</h2>
+                <button class="mob-only" onclick="toggleMenu()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="actions">
-                <button class="btn join" onclick="joinChatPrompt()">+ Найти / Создать</button>
-            </div>
-            <div id="room-list"></div>
-            <div class="profile">ID: <b id="my-nick">...</b></div>
+            <button class="action-btn main" onclick="joinPrompt()">+ Новый чат / Поиск</button>
+            <div id="room-list" class="room-list scroll"></div>
+            <div class="user-tag">Ваш ID: <span id="my-id">...</span></div>
         </aside>
 
         <main>
             <header>
-                <div class="header-left">
-                    <button onclick="menu()" class="mob"><i class="fa-solid fa-bars"></i></button>
-                    <h2 id="chat-name">Выберите чат</h2>
+                <div class="h-left">
+                    <button class="mob-only" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+                    <h3 id="current-title">Выберите чат</h3>
                 </div>
-                <div class="header-right">
-                    <button id="add-u" class="icon-btn" style="display:none" title="Добавить друга" onclick="invite()">
-                        <i class="fa-solid fa-user-plus"></i>
-                    </button>
-                </div>
+                <button id="invite-icon" class="action-btn circle" style="display:none" onclick="inviteFriend()">
+                    <i class="fa-solid fa-user-plus"></i>
+                </button>
             </header>
-            <div id="chat-box"></div>
-            <div class="input-wrap" id="controls" style="display:none">
-                <input type="text" id="m-text" placeholder="Написать..." onkeypress="enter(event)">
+
+            <div id="chat-flow" class="scroll"></div>
+
+            <div class="footer" id="footer" style="display:none">
+                <input type="text" id="msg-input" placeholder="Напишите что-нибудь..." onkeydown="if(event.key==='Enter')send()">
                 <button class="send-btn" onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </main>
