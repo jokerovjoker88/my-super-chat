@@ -17,27 +17,30 @@ const db = new Client({
 async function startDB() {
     try {
         await db.connect();
-        // Удаляем все старое, чтобы не было конфликтов
-        await db.query('DROP TABLE IF EXISTS messages');
-        // Создаем заново идеальную таблицу
+        console.log("Connected to DB. Fixing columns...");
+        
+        // ВНИМАНИЕ: Это удалит старую кривую таблицу и создаст новую со всеми колонками
+        await db.query('DROP TABLE IF EXISTS messages CASCADE'); 
+        
         await db.query(`
             CREATE TABLE messages (
                 id SERIAL PRIMARY KEY,
-                sender TEXT,
-                receiver TEXT,
-                txt TEXT,
+                sender TEXT NOT NULL,
+                receiver TEXT NOT NULL,
+                txt TEXT NOT NULL,
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-        console.log("DB RESTARTED & READY");
-    } catch (e) { console.error("DATABASE START ERROR:", e); }
+        console.log("DATABASE REPAIRED: Tables are now perfect.");
+    } catch (e) { 
+        console.error("DB BOOT ERROR:", e.message); 
+    }
 }
 startDB();
 
 io.on('connection', (socket) => {
     socket.on('auth', (nick) => {
         socket.join(nick);
-        console.log(nick + " вошел в сеть");
     });
 
     socket.on('get_contacts', async (myNick) => {
@@ -47,7 +50,7 @@ io.on('connection', (socket) => {
                 FROM messages WHERE sender = $1 OR receiver = $1
             `, [myNick]);
             socket.emit('contacts_list', res.rows.map(r => r.contact));
-        } catch(e) { console.log(e); }
+        } catch(e) { console.error("Error fetching contacts:", e.message); }
     });
 
     socket.on('get_history', async ({ me, him }) => {
@@ -58,16 +61,21 @@ io.on('connection', (socket) => {
                 ORDER BY ts ASC
             `, [me, him]);
             socket.emit('history', res.rows);
-        } catch(e) { console.log(e); }
+        } catch(e) { console.error("History error:", e.message); }
     });
 
     socket.on('send', async (data) => {
         try {
-            await db.query("INSERT INTO messages (sender, receiver, txt) VALUES ($1, $2, $3)", 
-            [data.from, data.to, data.msg]);
-            io.to(data.from).to(data.to).emit('new_msg', data);
-        } catch(e) { console.log(e); }
+            // Проверка на наличие данных перед записью
+            if (data.from && data.to && data.msg) {
+                await db.query("INSERT INTO messages (sender, receiver, txt) VALUES ($1, $2, $3)", 
+                [data.from, data.to, data.msg]);
+                io.to(data.from).to(data.to).emit('new_msg', data);
+            }
+        } catch(e) { console.error("Send error:", e.message); }
     });
 });
 
-server.listen(process.env.PORT || 10000, '0.0.0.0');
+server.listen(process.env.PORT || 10000, '0.0.0.0', () => {
+    console.log("Server is running perfectly.");
+});
