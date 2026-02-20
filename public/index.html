@@ -9,8 +9,9 @@
 <body>
     <div id="chat-container">
         <header>
-            <div id="logo">💬 <span>GlobalChat Beta</span></div>
-            <div id="user-display">Загрузка...</div>
+            <div id="logo">💬 <span id="chat-title">Общий чат</span></div>
+            <button id="back-btn" style="display:none;">← Выйти</button>
+            <div id="user-display"></div>
         </header>
         <main>
             <div id="main-area">
@@ -18,18 +19,16 @@
                 <div id="typing-status"></div>
             </div>
             <aside id="sidebar">
-                <div class="sidebar-title">В СЕТИ</div>
+                <div class="sidebar-title">ЛЮДИ (нажми для привата)</div>
                 <div id="users-box"></div>
             </aside>
         </main>
         <div id="input-area">
-            <input type="text" id="msg-input" placeholder="Напишите сообщение..." autocomplete="off">
+            <input type="text" id="msg-input" placeholder="Сообщение..." autocomplete="off">
             <button id="send-btn">ОТПРАВИТЬ</button>
         </div>
     </div>
-
     <audio id="msg-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
-
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
