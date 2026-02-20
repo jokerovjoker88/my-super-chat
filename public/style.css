@@ -1,39 +1,29 @@
-:root { --bg: #0e1621; --side: #17212b; --accent: #2b5278; --text: #fff; --hover: #242f3d; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
+:root { --bg: #0e1621; --side: #17212b; --acc: #2b5278; --text: #fff; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; }
+.app { display: flex; height: 100vh; }
 
-.tg-container { display: flex; height: 100vh; }
+.sidebar { width: 300px; background: var(--side); display: flex; flex-direction: column; border-right: 1px solid #000; }
+.search-area { padding: 15px; }
+.search-area input { width: 85%; padding: 10px; border-radius: 10px; border: none; background: #242f3d; color: #fff; outline: none; }
 
-/* Сайдбар */
-.tg-aside { width: 350px; background: var(--side); border-right: 1px solid #000; display: flex; flex-direction: column; }
-.aside-header { padding: 15px; }
-.search-bar { background: #242f3d; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; }
-.search-bar input { background: none; border: none; color: white; outline: none; width: 100%; }
+.dialog-item { padding: 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.dialog-item:hover { background: #232e3b; }
+.dialog-item.active { background: var(--acc); }
+.ava { width: 40px; height: 40px; background: #5085b1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
-.dialogs-list { flex: 1; overflow-y: auto; }
-.dialog-item { padding: 12px 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; }
-.dialog-item:hover { background: var(--hover); }
-.dialog-item.active { background: var(--accent); }
-.ava { width: 45px; height: 45px; background: #5085b1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+.chat-view { flex: 1; display: flex; flex-direction: column; background: #0e1621; }
+.centered { margin: auto; opacity: 0.5; }
 
-/* Главный экран */
-.tg-main { flex: 1; background: #0e1621; position: relative; }
-.empty-screen { height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0.5; }
-
-#chat-window { display: flex; flex-direction: column; height: 100%; }
-.chat-header { padding: 10px 20px; background: var(--side); border-bottom: 1px solid #000; }
-.messages-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-
+.chat-header { padding: 15px 25px; background: var(--side); font-weight: bold; border-bottom: 1px solid #000; }
+.messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
 .msg-row { display: flex; width: 100%; }
 .msg-row.me { justify-content: flex-end; }
-.bubble { max-width: 65%; padding: 8px 12px; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; position: relative; }
-.me .bubble { background: #2b5278; border-bottom-right-radius: 2px; }
+.bubble { max-width: 70%; padding: 10px 15px; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; }
+.me .bubble { background: var(--acc); border-bottom-right-radius: 2px; }
 .them .bubble { background: #182533; border-bottom-left-radius: 2px; }
 
-.chat-img { max-width: 100%; border-radius: 8px; margin-bottom: 5px; }
-.file-link { color: #5085b1; text-decoration: none; font-weight: bold; }
-
-.chat-footer { padding: 15px 20px; background: var(--side); display: flex; align-items: center; gap: 15px; }
-.chat-footer input { flex: 1; background: none; border: none; color: white; outline: none; font-size: 1rem; }
-.file-btn { font-size: 1.3rem; cursor: pointer; color: #707579; }
-#send-btn { background: none; border: none; color: #5085b1; font-size: 1.8rem; cursor: pointer; }
-.me-tag { padding: 10px; text-align: center; font-size: 0.8rem; opacity: 0.5; border-top: 1px solid #000; }
+.input-bar { padding: 15px 20px; background: var(--side); display: flex; align-items: center; gap: 15px; }
+.input-bar input { flex: 1; background: none; border: none; color: #fff; outline: none; font-size: 1rem; }
+.attach { cursor: pointer; color: #707579; font-size: 1.2rem; }
+#send-btn { background: none; border: none; color: #5085b1; font-size: 1.5rem; cursor: pointer; }
+.user-info { padding: 10px; text-align: center; border-top: 1px solid #000; font-size: 0.8rem; }
