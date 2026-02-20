@@ -28,7 +28,7 @@ function openChat(name) {
 
 socket.on('new_msg', data => {
     if(data.from === activeChat || data.to === activeChat) {
-        render(data.from, data.text, data.file, data.fileName, data.time);
+        render(data.sender || data.from, data.text, data.file, data.fileName, data.time);
     } else if(data.from !== myNick) {
         sound.play().catch(()=>{});
     }
