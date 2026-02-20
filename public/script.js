@@ -5,10 +5,28 @@ else window.location.reload();
 
 document.getElementById('my-name').innerText = myNick;
 let activeChat = null;
+let typingTimer;
 const sound = document.getElementById('notif-sound');
 
 socket.emit('auth', myNick);
 socket.on('auth_ok', d => { if(d?.avatar) document.getElementById('my-ava').src = d.avatar; });
+
+// Отслеживание ввода текста
+document.getElementById('msg-input').addEventListener('input', () => {
+    if (activeChat) {
+        socket.emit('typing', { to: activeChat, from: myNick });
+    }
+});
+
+// Слушаем статус "печатает" от собеседника
+socket.on('user_typing', ({ from }) => {
+    if (activeChat === from) {
+        const statusEl = document.getElementById('typing-status');
+        statusEl.innerText = 'печатает...';
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => { statusEl.innerText = ''; }, 2000);
+    }
+});
 
 const search = () => {
     const nick = document.getElementById('user-search').value.trim();
@@ -22,6 +40,7 @@ function openChat(name) {
     document.getElementById('welcome').style.display = 'none';
     document.getElementById('chat-box').style.display = 'flex';
     document.getElementById('target-name').innerText = name;
+    document.getElementById('typing-status').innerText = ''; 
     if(window.innerWidth <= 600) document.getElementById('sidebar').style.display = 'none';
     socket.emit('load_chat', { me: myNick, him: name });
 }
@@ -29,9 +48,7 @@ function openChat(name) {
 socket.on('new_msg', data => {
     if(data.from === activeChat || data.to === activeChat) {
         render(data.from, data.text, data.file, data.fileName, data.time, data.id, data.is_read);
-        if(data.from !== myNick && activeChat === data.from) {
-            socket.emit('load_chat', { me: myNick, him: activeChat });
-        }
+        if(data.from !== myNick) socket.emit('load_chat', { me: myNick, him: activeChat });
     } else if(data.from !== myNick) {
         sound.play().catch(()=>{});
     }
@@ -76,10 +93,7 @@ function render(s, t, f, fn, time, id, isRead) {
     d.innerHTML = `<div class="bubble">
         ${f ? (f.startsWith('data:image') ? `<img src="${f}" style="max-width:100%">` : `<a href="${f}" download="${fn}">📁 ${fn}</a>`) : ''}
         <span>${t || ''}</span>
-        <div class="msg-meta">
-            <small>${time || ''}</small>
-            ${ticks}
-        </div>
+        <div class="msg-meta"><small>${time || ''}</small>${ticks}</div>
     </div>`;
     box.appendChild(d);
     box.scrollTop = box.scrollHeight;
