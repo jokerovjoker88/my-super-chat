@@ -17,6 +17,8 @@ const db = new Client({
 async function boot() {
     try {
         await db.connect();
+        
+        // 1. Создаем таблицы, если их нет
         await db.query(`
             CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, avatar TEXT, is_online BOOLEAN DEFAULT FALSE);
             CREATE TABLE IF NOT EXISTS messages (
@@ -26,17 +28,19 @@ async function boot() {
                 content TEXT,
                 file_data TEXT,
                 file_name TEXT,
-                is_read BOOLEAN DEFAULT FALSE,
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        // Исправляем структуру, если нужно
+
+        // 2. ПРИНУДИТЕЛЬНО ДОБАВЛЯЕМ НЕДОСТАЮЩИЕ КОЛОНКИ (Исправляет твою ошибку)
         await db.query(`
             ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
+            ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
         `);
-        console.log("=== SERVER READY ===");
-    } catch (e) { console.error(e); }
+
+        console.log("=== SERVER ONLINE & DATABASE PATCHED ===");
+    } catch (e) { console.error("BOOT ERROR:", e); }
 }
 boot();
 
@@ -51,10 +55,8 @@ io.on('connection', (socket) => {
         io.emit('status_update');
     });
 
-    // Поиск пользователя и создание "заглушки" в базе
     socket.on('search_user', async (targetNick) => {
         if (!targetNick) return;
-        // Проверяем, существует ли пользователь, если нет — создаем его
         await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [targetNick]);
         const res = await db.query("SELECT username, avatar, is_online FROM users WHERE username = $1", [targetNick]);
         socket.emit('user_found', res.rows[0]);
@@ -75,6 +77,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('load_chat', async ({ me, him }) => {
+        // Здесь была ошибка: колонка is_read не существовала
         await db.query("UPDATE messages SET is_read = TRUE WHERE sender = $1 AND receiver = $2", [him, me]);
         const res = await db.query(`SELECT sender, content, file_data, file_name, to_char(ts, 'HH24:MI') as time FROM messages 
             WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1) ORDER BY ts ASC`, [me, him]);
@@ -82,7 +85,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('send_msg', async (data) => {
-        await db.query("INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
+        await db.query("INSERT INTO messages (sender, receiver, content, file_data, file_name, is_read) VALUES ($1, $2, $3, $4, $5, FALSE)",
             [data.from, data.to, data.text, data.file || null, data.fileName || null]);
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         io.to(data.from).to(data.to).emit('new_msg', { ...data, time });
