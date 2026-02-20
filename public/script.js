@@ -1,74 +1,119 @@
 const socket = io();
-let myNick = localStorage.getItem('nebula_nick');
+let myNick = localStorage.getItem('tg_nick');
 
 if (!myNick) {
-    myNick = prompt("Придумайте ваш ник:");
-    if (!myNick) myNick = "User" + Math.floor(Math.random() * 100);
-    localStorage.setItem('nebula_nick', myNick);
+    myNick = prompt("Введите ваш Никнейм:");
+    if (myNick) localStorage.setItem('tg_nick', myNick);
 }
+document.getElementById('my-nick-display').innerText = myNick;
 
-let activeContact = null;
+let activePartner = null;
 
-// При запуске
+// Старт
 socket.emit('auth', myNick);
-socket.emit('get_contacts', myNick);
+socket.on('auth_ok', () => socket.emit('get_my_dialogs', myNick));
 
-function startChat() {
-    const p = prompt("Ник собеседника:");
-    if (p && p !== myNick) {
-        openChat(p.trim());
+// Поиск
+document.getElementById('user-search').onkeypress = (e) => {
+    if (e.key === 'Enter') {
+        socket.emit('search_user', e.target.value.trim());
+        e.target.value = '';
     }
-}
+};
 
-function openChat(nick) {
-    activeContact = nick;
-    document.getElementById('chat-name').innerText = nick;
-    document.getElementById('welcome').style.display = 'none';
-    document.getElementById('chat-ui').style.display = 'flex';
-    socket.emit('get_history', { me: myNick, him: nick });
-    socket.emit('get_contacts', myNick);
-}
+socket.on('user_found', (name) => {
+    if (name === myNick) return;
+    openDialog(name);
+});
 
-function sendMsg() {
-    const input = document.getElementById('inp');
-    if (input.value.trim() && activeContact) {
-        socket.emit('send', { from: myNick, to: activeContact, msg: input.value });
-        input.value = '';
-    }
-}
+socket.on('error_msg', (txt) => alert(txt));
 
-socket.on('contacts_list', list => {
-    const box = document.getElementById('list');
+// Список диалогов
+socket.on('dialogs_list', list => {
+    const box = document.getElementById('dialogs');
     box.innerHTML = '';
-    list.forEach(nick => {
-        const d = document.createElement('div');
-        d.className = `item ${activeContact === nick ? 'active' : ''}`;
-        d.innerText = nick;
-        d.onclick = () => openChat(nick);
-        box.appendChild(d);
+    list.forEach(d => {
+        const item = document.createElement('div');
+        item.className = `dialog-item ${activePartner === d.partner ? 'active' : ''}`;
+        item.innerHTML = `<div class="ava">${d.partner[0].toUpperCase()}</div> <span>${d.partner}</span>`;
+        item.onclick = () => openDialog(d.partner);
+        box.appendChild(item);
     });
 });
 
-socket.on('history', msgs => {
-    const box = document.getElementById('msgs');
+function openDialog(name) {
+    activePartner = name;
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('chat-window').style.display = 'flex';
+    document.getElementById('chat-with-name').innerText = name;
+    socket.emit('load_chat', { me: myNick, him: name });
+    socket.emit('get_my_dialogs', myNick);
+}
+
+// Сообщения
+socket.on('chat_history', msgs => {
+    const box = document.getElementById('messages');
     box.innerHTML = '';
-    msgs.forEach(m => render(m.sender, m.txt));
+    msgs.forEach(m => render(m.sender, m.content, m.file_data, m.file_name));
 });
 
 socket.on('new_msg', data => {
-    if (data.from === activeContact || data.to === activeContact) {
-        render(data.from, data.msg);
+    if (data.from === activePartner || data.to === activePartner) {
+        render(data.from, data.text, data.file, data.fileName);
     }
-    socket.emit('get_contacts', myNick);
+    socket.emit('get_my_dialogs', myNick);
 });
 
-function render(s, t) {
-    const box = document.getElementById('msgs');
+function render(s, t, file, fileName) {
+    const box = document.getElementById('messages');
     const d = document.createElement('div');
-    d.className = `m ${s === myNick ? 'me' : 'he'}`;
-    d.innerHTML = `<span>${t}</span>`;
+    d.className = `msg-row ${s === myNick ? 'me' : 'them'}`;
+    
+    let content = `<div class="bubble">`;
+    if (file) {
+        if (file.startsWith('data:image')) {
+            content += `<img src="${file}" class="chat-img"><br>`;
+        } else {
+            content += `<a href="${file}" download="${fileName}" class="file-link"><i class="fa-solid fa-file"></i> ${fileName}</a><br>`;
+        }
+    }
+    content += `<span>${t}</span></div>`;
+    
+    d.innerHTML = content;
     box.appendChild(d);
     box.scrollTop = box.scrollHeight;
 }
 
-document.getElementById('inp').onkeydown = (e) => { if(e.key === 'Enter') sendMsg(); };
+// Отправка
+async function send() {
+    const inp = document.getElementById('msg-input');
+    const fileInp = document.getElementById('file-input');
+    const file = fileInp.files[0];
+    
+    let fileData = null;
+    if (file) {
+        fileData = await toBase64(file);
+    }
+
+    if ((inp.value.trim() || fileData) && activePartner) {
+        socket.emit('send_msg', {
+            from: myNick,
+            to: activePartner,
+            text: inp.value.trim(),
+            file: fileData,
+            fileName: file ? file.name : null
+        });
+        inp.value = '';
+        fileInp.value = '';
+    }
+}
+
+const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+});
+
+document.getElementById('send-btn').onclick = send;
+document.getElementById('msg-input').onkeypress = (e) => { if(e.key === 'Enter') send(); };
