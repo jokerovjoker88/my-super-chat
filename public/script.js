@@ -1,32 +1,22 @@
 const socket = io();
-let myNick = localStorage.getItem('tg_nick') || prompt("Ваш ник (только латиница):");
-if (myNick) localStorage.setItem('tg_nick', myNick);
-else window.location.reload();
-
+let myNick = localStorage.getItem('tg_nick') || prompt("Ваш ник:");
+localStorage.setItem('tg_nick', myNick);
 document.getElementById('my-name').innerText = myNick;
+
 let activeChat = null;
+let typingTimeout;
 const sound = document.getElementById('notif-sound');
 
 socket.emit('auth', myNick);
-socket.on('auth_ok', d => { if(d && d.avatar) document.getElementById('my-ava').src = d.avatar; });
+socket.on('auth_ok', d => { if(d?.avatar) document.getElementById('my-ava').src = d.avatar; });
 
-// Функция поиска
-const startSearch = () => {
-    const nick = document.getElementById('user-search').value.trim();
-    if(nick && nick !== myNick) {
-        socket.emit('search_user', nick);
-        document.getElementById('user-search').value = '';
-    }
+// Поиск
+const search = () => {
+    const n = document.getElementById('user-search').value.trim();
+    if(n && n !== myNick) socket.emit('search_user', n);
 };
-
-document.getElementById('search-btn').onclick = startSearch;
-document.getElementById('user-search').onkeypress = (e) => { if(e.key==='Enter') startSearch(); };
-
-// Когда сервер нашел пользователя
-socket.on('user_found', user => {
-    if(user) openChat(user.username);
-    else alert("Пользователь не найден");
-});
+document.getElementById('search-btn').onclick = search;
+socket.on('user_found', u => openChat(u.username));
 
 function openChat(name) {
     activeChat = name;
@@ -35,75 +25,78 @@ function openChat(name) {
     document.getElementById('target-name').innerText = name;
     if(window.innerWidth <= 600) document.getElementById('sidebar').style.display = 'none';
     socket.emit('load_chat', { me: myNick, him: name });
-    socket.emit('get_my_dialogs', myNick);
 }
 
-socket.on('dialogs_list', list => {
-    const box = document.getElementById('dialogs');
-    box.innerHTML = '';
-    list.forEach(d => {
-        const el = document.createElement('div');
-        el.className = `dialog-item ${activeChat === d.partner ? 'active' : ''}`;
-        const ava = d.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
-        el.innerHTML = `
-            <div class="ava-wrap ${d.is_online?'on':''}"><img src="${ava}"></div>
-            <div class="d-info"><b>${d.partner}</b>${d.unread > 0 ? `<span class="badge">${d.unread}</span>` : ''}</div>`;
-        el.onclick = () => openChat(d.partner);
-        box.appendChild(el);
-    });
+// Печатает...
+document.getElementById('msg-input').oninput = () => {
+    socket.emit('typing', { to: activeChat, from: myNick });
+};
+socket.on('user_typing', ({ from }) => {
+    if(from === activeChat) {
+        const s = document.getElementById('target-status');
+        s.innerText = 'печатает...';
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => s.innerText = '', 2000);
+    }
 });
 
 socket.on('new_msg', data => {
-    if(data.from === activeChat || data.to === activeChat) {
-        render(data.from, data.text, data.file, data.fileName, data.time);
-    } else if(data.from !== myNick) {
-        sound.play().catch(()=>{});
-    }
+    if(data.from === activeChat || data.to === activeChat) render(data.sender || data.from, data.text, data.file, data.fileName, data.time, data.id);
+    else if(data.from !== myNick) sound.play().catch(()=>{});
     socket.emit('get_my_dialogs', myNick);
 });
 
 socket.on('chat_history', msgs => {
-    const box = document.getElementById('messages');
-    box.innerHTML = '';
-    msgs.forEach(m => render(m.sender, m.content, m.file_data, m.file_name, m.time));
-    box.scrollTop = box.scrollHeight;
+    const b = document.getElementById('messages'); b.innerHTML = '';
+    msgs.forEach(m => render(m.sender, m.content, m.file_data, m.file_name, m.time, m.id));
+    b.scrollTop = b.scrollHeight;
 });
 
 async function send() {
-    const inp = document.getElementById('msg-input');
-    const fInp = document.getElementById('file-input');
-    if((inp.value.trim() || fInp.files[0]) && activeChat) {
-        let f = fInp.files[0] ? await toBase64(fInp.files[0]) : null;
-        socket.emit('send_msg', { from: myNick, to: activeChat, text: inp.value, file: f, fileName: fInp.files[0]?.name });
-        inp.value = ''; fInp.value = '';
+    const i = document.getElementById('msg-input'), fI = document.getElementById('file-input');
+    if((i.value.trim() || fI.files[0]) && activeChat) {
+        let f = fI.files[0] ? await toBase64(fI.files[0]) : null;
+        socket.emit('send_msg', { from: myNick, to: activeChat, text: i.value, file: f, fileName: fI.files[0]?.name });
+        i.value = ''; fI.value = '';
     }
 }
 
-function render(s, t, f, fn, time) {
+function render(s, t, f, fn, time, id) {
     const box = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = `msg-row ${s === myNick ? 'me' : 'them'}`;
-    d.innerHTML = `<div class="bubble">
-        ${f ? (f.startsWith('data:image') ? `<img src="${f}" style="max-width:100%">` : `<a href="${f}" download="${fn}">📁 ${fn}</a>`) : ''}
-        <span>${t || ''}</span><small style="display:block;font-size:0.6rem;opacity:0.5;text-align:right;">${time || ''}</small>
+    d.id = `msg-${id}`;
+    d.innerHTML = `<div class="bubble" onclick="${s === myNick ? `confirmDelete(${id})` : ''}">
+        ${f ? (f.startsWith('data:image') ? `<img src="${f}">` : `<a href="${f}" download="${fn}">📁 ${fn}</a>`) : ''}
+        <span>${t || ''}</span><small>${time}</small>
     </div>`;
     box.appendChild(d);
     box.scrollTop = box.scrollHeight;
 }
+
+function confirmDelete(id) {
+    if(confirm("Удалить это сообщение?")) socket.emit('delete_msg', { id, from: myNick, to: activeChat });
+}
+socket.on('msg_deleted', ({ id }) => document.getElementById(`msg-${id}`)?.remove());
 
 const toBase64 = f => new Promise(res => {
     const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res(r.result);
 });
 
 document.getElementById('send-btn').onclick = send;
-document.getElementById('msg-input').onkeypress = e => { if(e.key==='Enter') send(); };
 document.getElementById('back-btn').onclick = () => {
     document.getElementById('sidebar').style.display = 'flex';
     document.getElementById('chat-box').style.display = 'none';
 };
-document.getElementById('ava-input').onchange = async e => {
-    const base64 = await toBase64(e.target.files[0]);
-    socket.emit('update_avatar', base64);
-    document.getElementById('my-ava').src = base64;
-};
+socket.on('dialogs_list', list => {
+    const b = document.getElementById('dialogs'); b.innerHTML = '';
+    list.forEach(d => {
+        const el = document.createElement('div');
+        el.className = `dialog-item ${activeChat === d.partner ? 'active' : ''}`;
+        el.innerHTML = `<div class="ava-wrap ${d.is_online?'on':''}"><img src="${d.avatar||'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"></div>
+            <div class="d-info"><b>${d.partner}</b>${d.unread > 0 ? `<span class="badge">${d.unread}</span>` : ''}</div>`;
+        el.onclick = () => openChat(d.partner);
+        b.appendChild(el);
+    });
+});
 socket.on('status_update', () => socket.emit('get_my_dialogs', myNick));
