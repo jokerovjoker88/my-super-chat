@@ -17,6 +17,7 @@ const db = new Client({
 async function boot() {
     try {
         await db.connect();
+        // Создаем обновленную структуру таблиц
         await db.query(`
             CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, avatar TEXT, is_online BOOLEAN DEFAULT FALSE);
             CREATE TABLE IF NOT EXISTS messages (
@@ -27,13 +28,15 @@ async function boot() {
                 file_data TEXT,
                 file_name TEXT,
                 is_read BOOLEAN DEFAULT FALSE,
+                reply_to_id INTEGER,
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
+            ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
         `);
-        console.log("=== NEBULA CORE ONLINE ===");
+        console.log("=== NEBULA ULTIMATE ONLINE ===");
     } catch (e) { console.error(e); }
 }
 boot();
@@ -55,17 +58,31 @@ io.on('connection', (socket) => {
         socket.emit('user_found', res.rows[0]);
     });
 
-    socket.on('typing', ({ to, from }) => {
-        socket.to(to).emit('user_typing', { from });
-    });
+    socket.on('typing', ({ to, from }) => { socket.to(to).emit('user_typing', { from }); });
 
+    // ОТПРАВКА С ОТВЕТОМ
     socket.on('send_msg', async (data) => {
         const res = await db.query(
-            "INSERT INTO messages (sender, receiver, content, file_data, file_name, is_read) VALUES ($1, $2, $3, $4, $5, FALSE) RETURNING id",
-            [data.from, data.to, data.text, data.file, data.fileName]
+            "INSERT INTO messages (sender, receiver, content, file_data, file_name, is_read, reply_to_id) VALUES ($1, $2, $3, $4, $5, FALSE, $6) RETURNING id",
+            [data.from, data.to, data.text, data.file, data.fileName, data.replyToId || null]
         );
+        
+        let replyText = null;
+        if(data.replyToId) {
+            const r = await db.query("SELECT content FROM messages WHERE id = $1", [data.replyToId]);
+            replyText = r.rows[0]?.content;
+        }
+
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        io.to(data.from).to(data.to).emit('new_msg', { ...data, id: res.rows[0].id, time });
+        io.to(data.from).to(data.to).emit('new_msg', { 
+            ...data, id: res.rows[0].id, time, replyText, is_read: false 
+        });
+    });
+
+    // РЕДАКТИРОВАНИЕ
+    socket.on('edit_msg', async ({ id, newText, from, to }) => {
+        await db.query("UPDATE messages SET content = $1 WHERE id = $2 AND sender = $3", [newText, id, from]);
+        io.to(from).to(to).emit('msg_edited', { id, newText });
     });
 
     socket.on('delete_msg', async ({ id, from, to }) => {
@@ -75,9 +92,15 @@ io.on('connection', (socket) => {
 
     socket.on('load_chat', async ({ me, him }) => {
         await db.query("UPDATE messages SET is_read = TRUE WHERE sender = $1 AND receiver = $2", [him, me]);
-        const res = await db.query(`SELECT id, sender, content, file_data, file_name, to_char(ts, 'HH24:MI') as time FROM messages 
-            WHERE (sender=$1 AND receiver=$2) OR (sender=$2 AND receiver=$1) ORDER BY ts ASC`, [me, him]);
+        const res = await db.query(`
+            SELECT m.id, m.sender, m.content, m.file_data, m.file_name, m.is_read, m.reply_to_id,
+            (SELECT content FROM messages WHERE id = m.reply_to_id) as reply_text,
+            to_char(m.ts, 'HH24:MI') as time 
+            FROM messages m
+            WHERE (m.sender=$1 AND m.receiver=$2) OR (m.sender=$2 AND m.receiver=$1) 
+            ORDER BY m.ts ASC`, [me, him]);
         socket.emit('chat_history', res.rows);
+        io.to(him).emit('messages_seen', { by: me }); // Уведомляем друга, что мы прочитали
     });
 
     socket.on('get_my_dialogs', async (me) => {
