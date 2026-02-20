@@ -1,5 +1,5 @@
 const socket = io();
-let myNick = localStorage.getItem('tg_nick') || prompt("Ваш ник:");
+let myNick = localStorage.getItem('tg_nick') || prompt("Ваш ник (только латиница):");
 if (myNick) localStorage.setItem('tg_nick', myNick);
 else window.location.reload();
 
@@ -10,16 +10,23 @@ const sound = document.getElementById('notif-sound');
 socket.emit('auth', myNick);
 socket.on('auth_ok', d => { if(d && d.avatar) document.getElementById('my-ava').src = d.avatar; });
 
-// Поиск и добавление чата
-const findUser = () => {
-    const val = document.getElementById('user-search').value.trim();
-    if(val && val !== myNick) {
-        openChat(val);
+// Функция поиска
+const startSearch = () => {
+    const nick = document.getElementById('user-search').value.trim();
+    if(nick && nick !== myNick) {
+        socket.emit('search_user', nick);
         document.getElementById('user-search').value = '';
     }
 };
-document.getElementById('search-btn').onclick = findUser;
-document.getElementById('user-search').onkeypress = (e) => { if(e.key === 'Enter') findUser(); };
+
+document.getElementById('search-btn').onclick = startSearch;
+document.getElementById('user-search').onkeypress = (e) => { if(e.key==='Enter') startSearch(); };
+
+// Когда сервер нашел пользователя
+socket.on('user_found', user => {
+    if(user) openChat(user.username);
+    else alert("Пользователь не найден");
+});
 
 function openChat(name) {
     activeChat = name;
@@ -50,7 +57,7 @@ socket.on('new_msg', data => {
     if(data.from === activeChat || data.to === activeChat) {
         render(data.from, data.text, data.file, data.fileName, data.time);
     } else if(data.from !== myNick) {
-        if(sound) sound.play().catch(()=>{});
+        sound.play().catch(()=>{});
     }
     socket.emit('get_my_dialogs', myNick);
 });
@@ -99,5 +106,4 @@ document.getElementById('ava-input').onchange = async e => {
     socket.emit('update_avatar', base64);
     document.getElementById('my-ava').src = base64;
 };
-socket.on('refresh_chats', () => socket.emit('get_my_dialogs', myNick));
 socket.on('status_update', () => socket.emit('get_my_dialogs', myNick));
