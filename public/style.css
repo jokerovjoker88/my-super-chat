@@ -1,3 +1,4 @@
+/* Общие настройки */
 * { box-sizing: border-box; }
 body { 
     margin: 0; background-color: #1e1f22; 
@@ -11,14 +12,25 @@ body {
     border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.4);
 }
 
+/* Шапка сайта */
 header {
     background: #2b2d31; padding: 15px 25px; color: white;
     display: flex; justify-content: space-between; align-items: center;
     border-bottom: 1px solid #1e1f22;
 }
 
+#logo { display: flex; align-items: center; gap: 10px; font-size: 18px; }
 #logo span { color: #5865f2; font-weight: bold; }
 
+/* Кнопка выхода из привата */
+#back-btn {
+    background: #da373c; color: white; border: none;
+    padding: 6px 12px; border-radius: 4px; cursor: pointer;
+    font-weight: bold; font-size: 12px; transition: 0.2s;
+}
+#back-btn:hover { background: #a1282c; }
+
+/* Основная рабочая область */
 main { display: flex; flex: 1; overflow: hidden; }
 #main-area { flex: 3; display: flex; flex-direction: column; background: #313338; }
 
@@ -29,41 +41,24 @@ main { display: flex; flex: 1; overflow: hidden; }
     height: 25px; font-style: italic; 
 }
 
+/* Боковая панель со списком пользователей */
 #sidebar { 
     flex: 1; background: #2b2d31; padding: 20px; 
     border-left: 1px solid #1e1f22; color: #dbdee1;
 }
 
-.sidebar-title { font-size: 11px; font-weight: bold; margin-bottom: 15px; color: #949ba4; letter-spacing: 1px; }
-
-/* Сообщения */
-.message-wrapper { display: flex; align-items: flex-start; margin-bottom: 20px; animation: fadeIn 0.3s ease; }
-.my-wrapper { flex-direction: row-reverse; }
-
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-.avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: bold; color: white; flex-shrink: 0;
+.sidebar-title { 
+    font-size: 11px; font-weight: bold; margin-bottom: 15px; 
+    color: #949ba4; letter-spacing: 1px; text-transform: uppercase;
 }
-.message-wrapper:not(.my-wrapper) .avatar { margin-right: 12px; }
-.my-wrapper .avatar { margin-left: 12px; }
 
-.message { padding: 10px 14px; border-radius: 16px; max-width: 75%; position: relative; line-height: 1.4; }
-.other-message { background: #383a40; color: #dbdee1; border-top-left-radius: 2px; }
-.my-message { background: #5865f2; color: white; border-top-right-radius: 2px; }
-
-.msg-user { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; }
-.time { font-size: 10px; opacity: 0.5; margin-left: 5px; font-weight: normal; }
-
-#input-area { padding: 20px; display: flex; gap: 12px; background: #313338; border-top: 1px solid #2b2d31; }
-#msg-input { 
-    flex: 1; background: #383a40; border: none; padding: 12px 15px; 
-    border-radius: 8px; color: white; outline: none;
+.user-item {
+    padding: 10px; cursor: pointer; border-radius: 8px;
+    transition: 0.2s; display: flex; align-items: center;
+    margin-bottom: 5px; color: #dbdee1;
 }
-#send-btn { 
-    background: #5865f2; color: white; border: none; 
-    padding: 0 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s;
-}
-#send-btn:hover { background: #4752c4; }
+.user-item:hover { background: #393c41; color: white; }
+
+.status-dot {
+    width: 8px; height: 8px; background: #23a55a;
+    border-radius: 50%; margin-right: 12px;
