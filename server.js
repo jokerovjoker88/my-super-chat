@@ -14,73 +14,73 @@ const db = new Client({
     ssl: { rejectUnauthorized: false }
 });
 
-async function init() {
+async function startSystem() {
     try {
         await db.connect();
-        // Упрощенная схема: только сообщения и список комнат пользователя
+        console.log("DB Connected. Cleaning old tables...");
+        
+        // ВНИМАНИЕ: Очистка для исправления ошибок структуры
         await db.query(`
-            CREATE TABLE IF NOT EXISTS chat_msgs (
+            DROP TABLE IF EXISTS chat_msgs CASCADE;
+            DROP TABLE IF EXISTS user_rooms CASCADE;
+            
+            CREATE TABLE user_rooms (
+                username TEXT,
+                room_name TEXT,
+                PRIMARY KEY (username, room_name)
+            );
+            
+            CREATE TABLE chat_msgs (
                 id SERIAL PRIMARY KEY,
                 room TEXT,
                 sender TEXT,
                 text TEXT,
                 time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
-            CREATE TABLE IF NOT EXISTS user_rooms (
-                username TEXT,
-                room_name TEXT,
-                PRIMARY KEY (username, room_name)
-            );
         `);
-        console.log("DB READY");
-    } catch (e) { console.error("DB ERROR", e); }
+        console.log("System Reconfigured: Tables Ready");
+    } catch (e) { console.error("Critical Start Error:", e); }
 }
-init();
+startSystem();
 
 io.on('connection', (socket) => {
-    // 1. Загрузка чатов при входе
+    // Получение списка чатов
     socket.on('get_my_rooms', async (nick) => {
-        const res = await db.query("SELECT room_name FROM user_rooms WHERE username = $1", [nick]);
-        socket.emit('rooms_list', res.rows.map(r => r.room_name));
+        try {
+            const res = await db.query("SELECT room_name FROM user_rooms WHERE username = $1", [nick]);
+            socket.emit('rooms_list', res.rows.map(r => r.room_name));
+        } catch(e) { console.log(e); }
     });
 
-    // 2. Создание или вступление в чат
+    // Вступление/Создание
     socket.on('join_room', async ({ room, nick }) => {
         try {
-            socket.rooms.forEach(r => socket.leave(r)); 
+            socket.rooms.forEach(r => socket.leave(r));
             socket.join(room);
-            
-            // Добавляем в список доступных чатов
             await db.query("INSERT INTO user_rooms (username, room_name) VALUES ($1, $2) ON CONFLICT DO NOTHING", [nick, room]);
             
-            // Грузим историю
             const history = await db.query("SELECT sender, text FROM chat_msgs WHERE room = $1 ORDER BY time ASC", [room]);
             socket.emit('history', history.rows);
             
-            // Обновляем список чатов у юзера
             const myRooms = await db.query("SELECT room_name FROM user_rooms WHERE username = $1", [nick]);
             socket.emit('rooms_list', myRooms.rows.map(r => r.room_name));
-            
-        } catch (e) { console.log(e); }
+        } catch(e) { console.log(e); }
     });
 
-    // 3. Добавление другого пользователя (Приглашение)
+    // Добавление пользователя
     socket.on('add_user', async ({ room, targetNick }) => {
         try {
             await db.query("INSERT INTO user_rooms (username, room_name) VALUES ($1, $2) ON CONFLICT DO NOTHING", [targetNick, room]);
-            io.emit('check_new_rooms', targetNick); // Пингуем всех, нужный юзер обновится
-        } catch (e) { console.log(e); }
+            io.emit('ping_update', targetNick);
+        } catch(e) { console.log(e); }
     });
 
-    // 4. Отправка сообщения
+    // Сообщение
     socket.on('send_msg', async (data) => {
         try {
-            const { room, sender, text } = data;
-            if(!room || !text) return;
-            
-            await db.query("INSERT INTO chat_msgs (room, sender, text) VALUES ($1, $2, $3)", [room, sender, text]);
-            io.to(room).emit('new_msg', { sender, text, room });
-        } catch (e) { console.log(e); }
+            await db.query("INSERT INTO chat_msgs (room, sender, text) VALUES ($1, $2, $3)", [data.room, data.sender, data.text]);
+            io.to(data.room).emit('new_msg', data);
+        } catch(e) { console.log(e); }
     });
 });
 
