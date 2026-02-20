@@ -16,7 +16,6 @@ const db = new Client({
 });
 
 let isDbReady = false;
-
 db.connect().then(() => {
     isDbReady = true;
     return db.query(`
@@ -31,7 +30,7 @@ db.connect().then(() => {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     `);
-}).catch(err => console.error('DB Error:', err));
+}).catch(e => console.error(e));
 
 let onlineUsers = {};
 
@@ -40,10 +39,9 @@ io.on('connection', (socket) => {
         socket.username = data.username;
         onlineUsers[socket.id] = { name: data.username };
         socket.join('general');
-
         if (isDbReady) {
             try {
-                const res = await db.query("SELECT * FROM messages ORDER BY created_at DESC LIMIT 60");
+                const res = await db.query("SELECT * FROM messages ORDER BY created_at DESC LIMIT 50");
                 socket.emit('load history', res.rows.reverse());
             } catch (err) { console.error(err); }
         }
@@ -52,26 +50,17 @@ io.on('connection', (socket) => {
 
     socket.on('chat message', async (data) => {
         if (!isDbReady) return;
-        const { user, text, room, file, fileName, fileType } = data;
-        let type = file ? 'file' : 'text';
-        let content = file || text;
-
-        try {
-            const res = await db.query(
-                "INSERT INTO messages (username, content, room, msg_type, file_name, file_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-                [user, content, room || 'general', type, fileName || null, fileType || null]
-            );
-            
-            io.emit('chat message', {
-                id: res.rows[0].id,
-                username: user,
-                content: content,
-                msg_type: type,
-                file_name: fileName,
-                file_type: fileType,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            });
-        } catch (err) { console.error(err); }
+        const res = await db.query(
+            "INSERT INTO messages (username, content, room, msg_type, file_name, file_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+            [data.user, data.file || data.text, 'general', data.file ? 'file' : 'text', data.fileName, data.fileType]
+        );
+        io.emit('chat message', {
+            id: res.rows[0].id,
+            username: data.user,
+            content: data.file || data.text,
+            msg_type: data.file ? 'file' : 'text',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
     });
 
     socket.on('delete message', async (id) => {
@@ -82,7 +71,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('typing', (data) => socket.to('general').emit('display typing', data));
-
+    
     socket.on('disconnect', () => {
         delete onlineUsers[socket.id];
         io.emit('update online', Object.values(onlineUsers));
@@ -90,4 +79,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, '0.0.0.0', () => console.log(`Running on ${PORT}`));
+server.listen(PORT, '0.0.0.0', () => console.log('Server OK'));
