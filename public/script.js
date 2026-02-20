@@ -1,84 +1,74 @@
 const socket = io();
-let myName = localStorage.getItem('chat_name') || prompt("Ваш ник:") || "User";
-localStorage.setItem('chat_name', myName);
+let me = localStorage.getItem('nick') || prompt("Твой ник:");
+if(!me) me = "User" + Math.floor(Math.random()*100);
+localStorage.setItem('nick', me);
+document.getElementById('me').innerText = me;
 
-let currentRoom = null;
+let curRoom = null;
 
-document.getElementById('user-name').innerText = myName;
-document.getElementById('user-avatar').innerText = myName[0].toUpperCase();
+// Загрузка комнат
+const loadRooms = () => socket.emit('get_my_rooms', me);
+loadRooms();
 
-// 1. Запрос моих чатов
-socket.emit('get my rooms', myName);
-
-socket.on('rooms list', rooms => {
-    const box = document.getElementById('rooms-box');
-    box.innerHTML = '';
-    rooms.forEach(room => {
-        const div = document.createElement('div');
-        div.className = `room-item ${currentRoom === room ? 'active' : ''}`;
-        div.innerText = room;
-        div.onclick = () => switchRoom(room);
-        box.appendChild(div);
+socket.on('rooms_list', rooms => {
+    const list = document.getElementById('room-list');
+    list.innerHTML = '';
+    rooms.forEach(r => {
+        const d = document.createElement('div');
+        d.className = `room-item ${curRoom === r ? 'active' : ''}`;
+        d.innerText = r;
+        d.onclick = () => selectRoom(r);
+        list.appendChild(d);
     });
 });
 
-function createRoom() {
-    const name = prompt("Название нового чата:");
-    if (name) socket.emit('create room', { room: name, creator: myName });
+function createRoomPrompt() {
+    const r = prompt("Название чата:");
+    if(r) socket.emit('create_room', { room: r, user: me });
 }
 
-socket.on('room created', room => {
-    socket.emit('get my rooms', myName);
-    switchRoom(room);
+function addUserPrompt() {
+    const u = prompt("Ник того, кого добавить:");
+    if(u) socket.emit('add_user_to_room', { room: curRoom, targetUser: u });
+}
+
+function selectRoom(r) {
+    curRoom = r;
+    document.getElementById('cur-room-name').innerText = r;
+    document.getElementById('add-user-btn').style.display = 'block';
+    document.getElementById('input-zone').style.display = 'flex';
+    socket.emit('join_room', { room: r, user: me });
+    loadRooms(); // Обновить активный статус в списке
+    if(window.innerWidth < 768) toggleMenu();
+}
+
+socket.on('history', msgs => {
+    const box = document.getElementById('msgs');
+    box.innerHTML = '';
+    msgs.forEach(addMsg);
 });
 
-function inviteUser() {
-    const target = prompt("Ник пользователя, которого хотите добавить:");
-    if (target) {
-        socket.emit('invite user', { room: currentRoom, targetUser: target });
-        alert(`Запрос отправлен пользователю ${target}`);
-    }
+socket.on('new_msg', m => { if(m.room === curRoom) addMsg(m); });
+
+function addMsg(m) {
+    const box = document.getElementById('msgs');
+    const d = document.createElement('div');
+    d.className = `msg ${m.username === me ? 'mine' : ''}`;
+    d.innerHTML = `<small>${m.username}</small><br>${m.content}`;
+    box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
 }
 
-socket.on('new invite', data => {
-    if (data.targetUser === myName) {
-        alert(`Вас добавили в чат: ${data.room}`);
-        socket.emit('get my rooms', myName);
-    }
-});
-
-function switchRoom(room) {
-    currentRoom = room;
-    document.getElementById('room-title').innerText = room;
-    document.getElementById('invite-btn').style.display = 'block';
-    document.getElementById('input-footer').style.display = 'block';
-    socket.emit('join room', { username: myName, room: room });
-    if(window.innerWidth < 900) toggleMenu();
-}
-
-socket.on('load history', h => {
-    const messagesDiv = document.getElementById('messages');
-    messagesDiv.innerHTML = '';
-    h.forEach(renderMessage);
-});
-
-socket.on('chat message', m => { if(m.room === currentRoom) renderMessage(m); });
-
-function renderMessage(data) {
-    const isMine = data.username === myName;
-    const wrap = document.createElement('div');
-    wrap.className = `message-wrapper ${isMine ? 'my-wrapper' : ''}`;
-    wrap.innerHTML = `<div class="message"><strong>${data.username}</strong><br>${data.content}</div>`;
-    document.getElementById('messages').appendChild(wrap);
-    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-}
-
-document.getElementById('send-btn').onclick = () => {
-    const txt = document.getElementById('msg-input').value;
-    if(txt.trim() && currentRoom) {
-        socket.emit('chat message', { user: myName, text: txt, room: currentRoom });
-        document.getElementById('msg-input').value = '';
+document.getElementById('s-btn').onclick = () => {
+    const i = document.getElementById('m-input');
+    if(i.value && curRoom) {
+        socket.emit('send_msg', { user: me, text: i.value, room: curRoom });
+        i.value = '';
     }
 };
+
+socket.on('check_invites', target => { if(target === me) loadRooms(); });
+
+socket.on('room_update', () => loadRooms());
 
 function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
