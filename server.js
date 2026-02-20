@@ -33,7 +33,7 @@ async function boot() {
             ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
             ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
         `);
-        console.log("=== SERVER ONLINE: TYPING & READ STATUS ENABLED ===");
+        console.log("=== SERVER ONLINE: STABLE VERSION ===");
     } catch (e) { console.error("DB ERROR:", e); }
 }
 boot();
@@ -49,7 +49,6 @@ io.on('connection', (socket) => {
         io.emit('status_update');
     });
 
-    // Пересылка статуса "печатает"
     socket.on('typing', ({ to, from }) => {
         socket.to(to).emit('user_typing', { from });
     });
