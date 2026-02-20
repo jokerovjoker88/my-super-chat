@@ -5,10 +5,7 @@ const { Client } = require('pg');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { 
-    cors: { origin: "*" }, 
-    maxHttpBufferSize: 1e7 // Разрешаем файлы до 10МБ
-});
+const io = new Server(server, { cors: { origin: "*" }, maxHttpBufferSize: 1e7 });
 
 app.use(express.static('public'));
 
@@ -17,15 +14,11 @@ const db = new Client({
     ssl: { rejectUnauthorized: false }
 });
 
-async function initSystem() {
+async function boot() {
     try {
         await db.connect();
-        // Создаем таблицы, если их нет
         await db.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                username TEXT PRIMARY KEY,
-                last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
+            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
                 sender TEXT REFERENCES users(username),
@@ -36,71 +29,61 @@ async function initSystem() {
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        console.log("=== NEBULA CORE v3: ONLINE ===");
-    } catch (e) { console.error("DB Init Error:", e); }
+        console.log("=== TG ENGINE ONLINE ===");
+    } catch (e) { console.error(e); }
 }
-initSystem();
+boot();
 
 io.on('connection', (socket) => {
-    // Вход / Регистрация
     socket.on('auth', async (nick) => {
-        if (!nick) return;
-        try {
-            await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT (username) DO UPDATE SET last_seen = NOW()", [nick]);
-            socket.username = nick;
-            socket.join(nick);
-            socket.emit('auth_ok');
-        } catch (e) { console.error(e); }
+        if(!nick) return;
+        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT (username) DO UPDATE SET last_seen = NOW()", [nick]);
+        socket.username = nick;
+        socket.join(nick);
+        socket.emit('auth_ok');
     });
 
-    // Поиск любого ника (Бесконечные пользователи)
+    // Поиск любого пользователя
     socket.on('search_user', async (target) => {
-        if (!target) return;
-        try {
-            // Если пользователя нет, создаем его "заочно"
-            await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [target]);
-            socket.emit('user_found', target);
-        } catch (e) { console.error(e); }
+        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [target]);
+        socket.emit('user_found', target);
     });
 
-    // Загрузка списка чатов
+    // Получение диалогов (сортировка по времени последнего сообщения)
     socket.on('get_my_dialogs', async (me) => {
-        try {
-            const res = await db.query(`
-                SELECT DISTINCT CASE WHEN sender = $1 THEN receiver ELSE sender END as partner
-                FROM messages WHERE sender = $1 OR receiver = $1
-            `, [me]);
-            socket.emit('dialogs_list', res.rows);
-        } catch (e) { console.error(e); }
+        const res = await db.query(`
+            SELECT DISTINCT ON (partner) partner FROM (
+                SELECT receiver as partner, ts FROM messages WHERE sender = $1
+                UNION
+                SELECT sender as partner, ts FROM messages WHERE receiver = $1
+            ) AS sub ORDER BY partner, ts DESC
+        `, [me]);
+        socket.emit('dialogs_list', res.rows);
     });
 
-    // Загрузка истории
     socket.on('load_chat', async ({ me, him }) => {
-        try {
-            const res = await db.query(`
-                SELECT sender, content, file_data, file_name, ts FROM messages 
-                WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1)
-                ORDER BY ts ASC
-            `, [me, him]);
-            socket.emit('chat_history', res.rows);
-        } catch (e) { console.error(e); }
+        const res = await db.query(`
+            SELECT sender, content, file_data, file_name, to_char(ts, 'HH24:MI') as time 
+            FROM messages WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1)
+            ORDER BY ts ASC
+        `, [me, him]);
+        socket.emit('chat_history', res.rows);
     });
 
-    // Отправка сообщения
-    socket.on('send_msg', async (data) => {
-        try {
-            // Гарантируем наличие отправителя и получателя в базе
-            await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [data.from]);
-            await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [data.to]);
+    // Логика "Печатает..."
+    socket.on('typing', ({ from, to }) => {
+        io.to(to).emit('is_typing', { from });
+    });
 
-            await db.query(
-                "INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
-                [data.from, data.to, data.text, data.file || null, data.fileName || null]
-            );
-            
-            // Рассылаем участникам
-            io.to(data.from).to(data.to).emit('new_msg', data);
-        } catch (e) { console.error("Message error:", e); }
+    socket.on('send_msg', async (data) => {
+        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [data.to]);
+        await db.query(
+            "INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
+            [data.from, data.to, data.text, data.file || null, data.fileName || null]
+        );
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        io.to(data.from).to(data.to).emit('new_msg', { ...data, time });
+        io.to(data.to).emit('refresh_dialogs');
     });
 });
 
