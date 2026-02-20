@@ -3,48 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Nebula Prime OS</title>
+    <title>Nebula Universal</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <div class="app-bg"></div>
-    
-    <div class="os-container">
-        <aside class="os-sidebar" id="sidebar">
-            <div class="sidebar-top">
-                <div class="brand">NEBULA<span>OS</span></div>
-                <button class="os-btn-close" onclick="toggleMenu()"><i class="fa-solid fa-chevron-left"></i></button>
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">NEBULA<span>PRO</span></div>
+                <button class="close-menu" onclick="toggleMenu()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="user-list-label">CONNECTED NODES</div>
-            <div id="users-box" class="os-users custom-scroll"></div>
+            <div class="users-scroll" id="users-box">
+                </div>
+            <div class="user-profile">
+                <div id="user-avatar" class="avatar">?</div>
+                <div class="user-info">
+                    <span id="user-name">Loading...</span>
+                    <small>Online</small>
+                </div>
+            </div>
         </aside>
 
-        <main class="os-main">
-            <header class="os-nav">
-                <button class="os-menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-clapperboard"></i></button>
-                <div class="os-nav-title">
-                    <h1 id="chat-title">Quantum Channel</h1>
-                    <div class="os-status"><span class="pulse"></span> System Encrypted</div>
+        <main class="chat-main">
+            <header class="top-nav">
+                <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars-staggered"></i></button>
+                <div class="chat-meta">
+                    <h2>Global Core</h2>
+                    <p>End-to-end encrypted</p>
                 </div>
             </header>
 
-            <div id="messages" class="os-stream custom-scroll">
-                <div class="skeleton-loader"></div>
-            </div>
+            <div id="messages" class="messages-area"></div>
 
-            <div id="typing-box" class="os-typing"></div>
-
-            <footer class="os-input-dock">
-                <div class="dock-inner">
-                    <label class="dock-btn plus">
-                        <i class="fa-solid fa-plus"></i>
-                        <input type="file" id="file-input" hidden>
-                    </label>
-                    <textarea id="msg-input" placeholder="Message..." rows="1"></textarea>
-                    <button id="send-btn" class="os-send-btn"><i class="fa-solid fa-arrow-up"></i></button>
+            <footer class="input-section">
+                <div class="input-container">
+                    <textarea id="msg-input" placeholder="Введите сообщение..." rows="1"></textarea>
+                    <button id="send-btn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </footer>
         </main>
