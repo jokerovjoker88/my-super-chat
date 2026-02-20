@@ -28,7 +28,10 @@
             <div id="chat-box" style="display: none; flex-direction: column; height: 100%;">
                 <header class="chat-header">
                     <button id="back-btn" class="mobile-only"><i class="fa-solid fa-arrow-left"></i></button>
-                    <span id="target-name">...</span>
+                    <div class="header-info">
+                        <span id="target-name">...</span>
+                        <small id="typing-status" style="color: #5085b1; display: block; font-size: 0.7rem; height: 12px;"></small>
+                    </div>
                 </header>
                 <div id="messages" class="messages"></div>
                 <footer class="input-bar">
