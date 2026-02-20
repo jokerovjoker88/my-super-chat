@@ -1,45 +1,63 @@
-// Вот здесь io() будет работать, потому что индексный файл подключит библиотеку
 const socket = io();
 
-let myName = localStorage.getItem('chat_name') || prompt("Твой ник:") || "Аноним";
+let myName = localStorage.getItem('chat_name') || prompt("Введите ваш ник:") || "Аноним";
 localStorage.setItem('chat_name', myName);
+document.getElementById('user-display').innerText = "Вы: " + myName;
 
-// Входим
 socket.emit('join', { username: myName });
 
-const msgInput = document.getElementById('msg-input');
-const sendBtn = document.getElementById('send-btn');
 const messagesDiv = document.getElementById('messages');
-const usersBox = document.getElementById('users-box');
+let isFocused = true;
+let unread = 0;
 
-function send() {
-    if (msgInput.value.trim()) {
-        socket.emit('chat message', { user: myName, text: msgInput.value });
-        msgInput.value = "";
+window.onfocus = () => { isFocused = true; unread = 0; document.title = "Messenger Pro"; };
+window.onblur = () => isFocused = false;
+
+function stringToColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    return `hsl(${Math.abs(hash) % 360}, 65%, 55%)`;
+}
+
+function addMessage(data) {
+    const isMine = data.user === myName;
+    const wrapper = document.createElement('div');
+    wrapper.className = `message-wrapper ${isMine ? 'my-wrapper' : ''}`;
+
+    wrapper.innerHTML = `
+        <div class="avatar" style="background: ${stringToColor(data.user)}">${data.user[0].toUpperCase()}</div>
+        <div class="message ${isMine ? 'my-message' : 'other-message'}">
+            <span class="msg-user">${data.user} <span class="time">${data.time || ''}</span></span>
+            <div>${data.text}</div>
+        </div>
+    `;
+
+    messagesDiv.appendChild(wrapper);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    if (!isFocused && !isMine) {
+        unread++;
+        document.title = `(${unread}) Новое сообщение!`;
     }
 }
 
-sendBtn.onclick = send;
-msgInput.onkeypress = (e) => { if(e.key === 'Enter') send(); };
-
-socket.on('chat message', (data) => {
-    addMessage(data);
-});
-
-socket.on('load history', (history) => {
-    messagesDiv.innerHTML = '';
-    history.forEach(addMessage);
-});
-
-socket.on('update online', (users) => {
-    usersBox.innerHTML = users.map(u => `<div>● ${u.name}</div>`).join('');
-});
-
-function addMessage(data) {
-    const div = document.createElement('div');
-    const isMine = data.user === myName;
-    div.className = `message ${isMine ? 'my-message' : 'other-message'}`;
-    div.innerHTML = `<span class="msg-user">${data.user}</span><div>${data.text}</div>`;
-    messagesDiv.appendChild(div);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+function send() {
+    const input = document.getElementById('msg-input');
+    if (input.value.trim()) {
+        socket.emit('chat message', { user: myName, text: input.value });
+        input.value = "";
+    }
 }
+
+document.getElementById('send-btn').onclick = send;
+document.getElementById('msg-input').onkeypress = (e) => { if(e.key === 'Enter') send(); };
+
+socket.on('chat message', addMessage);
+socket.on('load history', (h) => { messagesDiv.innerHTML = ''; h.forEach(addMessage); });
+socket.on('update online', (users) => {
+    document.getElementById('users-box').innerHTML = users.map(u => 
+        `<div style="display:flex; align-items:center; margin-bottom:10px; font-size:14px;">
+            <div style="width:10px; height:10px; background:#23a55a; border-radius:50%; margin-right:10px;"></div>
+            ${u.name}
+        </div>`).join('');
+});
