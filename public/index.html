@@ -3,72 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula Chat PRO</title>
+    <title>Nebula Prime Chat</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="blob-bg">
-        <div class="blob"></div>
-        <div class="blob"></div>
+    <div class="luxury-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
     </div>
 
-    <div class="app-window">
-        <aside class="glass-sidebar">
-            <div class="brand">
-                <div class="logo-icon"><i class="fa-solid fa-atom"></i></div>
-                <span>NEBULA<strong>PRO</strong></span>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo"><i class="fa-solid fa-atom"></i> NEBULA<span>PRIME</span></div>
             </div>
-            
-            <nav class="main-nav">
-                <div class="nav-btn active"><i class="fa-solid fa-ghost"></i> <span>Фантом-чат</span></div>
-                <div class="nav-btn"><i class="fa-solid fa-vault"></i> <span>Хранилище</span></div>
-            </nav>
-
-            <div class="section-label">СЕЙЧАС В СЕТИ</div>
-            <div id="users-box" class="users-scroll"></div>
-
-            <div class="me-card">
-                <div id="user-display-avatar" class="avatar-pro">?</div>
-                <div class="me-info">
-                    <span id="user-display">Загрузка...</span>
-                    <div class="status-badge">Активен</div>
+            <div id="users-box" class="users-list custom-scroll"></div>
+            <div class="profile-card">
+                <div id="user-display-avatar" class="avatar-circle">?</div>
+                <div class="user-meta">
+                    <span id="user-display">User</span>
+                    <span class="online-tag"><span class="dot"></span> Online</span>
                 </div>
             </div>
         </aside>
 
-        <main class="chat-viewport">
-            <header class="glass-header">
-                <div class="header-left">
-                    <button id="back-btn" class="icon-circle" style="display:none;"><i class="fa-solid fa-chevron-left"></i></button>
-                    <div>
-                        <h2 id="chat-title">Центральный узел</h2>
-                        <div class="encryption-tag"><i class="fa-solid fa-lock"></i> Сквозное шифрование</div>
-                    </div>
-                </div>
-                <div class="header-right">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <i class="fa-solid fa-ellipsis-vertical"></i>
+        <main class="chat-area">
+            <header class="chat-header">
+                <div class="header-info">
+                    <h2>Общий канал</h2>
+                    <p><i class="fa-solid fa-shield-halved"></i> Quantum Encrypted</p>
                 </div>
             </header>
 
-            <div id="messages" class="messages-flow">
-                </div>
+            <div id="messages" class="messages-container custom-scroll"></div>
 
-            <div id="typing-box" class="typing-alert"></div>
+            <div id="typing-box" class="typing-status"></div>
 
-            <footer class="input-zone">
-                <div class="input-glass-panel">
-                    <label class="btn-attach">
+            <footer class="input-panel">
+                <div class="panel-inner">
+                    <label class="icon-btn">
                         <i class="fa-solid fa-plus"></i>
                         <input type="file" id="file-input" hidden>
                     </label>
-                    
-                    <input type="text" id="msg-input" placeholder="Введите ваше послание..." autocomplete="off">
-                    
-                    <div class="input-actions">
-                        <button id="record-btn" class="btn-mic"><i class="fa-solid fa-microphone"></i></button>
-                        <button id="send-btn" class="btn-send"><i class="fa-solid fa-paper-plane"></i></button>
+                    <textarea id="msg-input" placeholder="Введите сообщение..." rows="1"></textarea>
+                    <div class="action-btns">
+                        <button id="record-btn" class="icon-btn"><i class="fa-solid fa-microphone"></i></button>
+                        <button id="send-btn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
                 </div>
             </footer>
