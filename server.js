@@ -5,7 +5,11 @@ const { Client } = require('pg');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" }, maxHttpBufferSize: 1e7 });
+const io = new Server(server, { 
+    cors: { origin: "*" },
+    pingTimeout: 60000, // Держим соединение с телефоном дольше
+    maxHttpBufferSize: 1e7 
+});
 
 app.use(express.static('public'));
 
@@ -29,8 +33,8 @@ async function start() {
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        console.log("=== NEBULA CORE v4 ONLINE ===");
-    } catch (e) { console.error("DB Error:", e); }
+        console.log("=== TG-ENGINE V5: REALTIME READY ===");
+    } catch (e) { console.error(e); }
 }
 start();
 
@@ -39,12 +43,11 @@ io.on('connection', (socket) => {
         if (!nick) return;
         await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [nick]);
         socket.username = nick;
-        socket.join(nick);
+        socket.join(nick); // Создаем персональную комнату по нику
         socket.emit('auth_ok');
     });
 
     socket.on('search_user', async (target) => {
-        if (!target) return;
         await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [target]);
         socket.emit('user_found', target);
     });
@@ -68,15 +71,18 @@ io.on('connection', (socket) => {
 
     socket.on('send_msg', async (data) => {
         try {
-            await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [data.to]);
             await db.query(
                 "INSERT INTO messages (sender, receiver, content, file_data, file_name) VALUES ($1, $2, $3, $4, $5)",
                 [data.from, data.to, data.text, data.file || null, data.fileName || null]
             );
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            // МГНОВЕННАЯ ОТПРАВКА ОБОИМ (через комнаты Socket.io)
             io.to(data.from).to(data.to).emit('new_msg', { ...data, time });
-            io.to(data.to).emit('refresh_dialogs');
-        } catch (e) { console.log(e); }
+            
+            // Сигнал обновить список чатов для получателя
+            io.to(data.to).emit('update_chats');
+        } catch (e) { console.error(e); }
     });
 });
 
