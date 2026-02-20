@@ -1,7 +1,6 @@
 {
-  "name": "super-messenger-pro",
-  "version": "2.0.0",
-  "description": "Chat with PostgreSQL storage",
+  "name": "super-chat-db",
+  "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -10,8 +9,5 @@
     "express": "^4.18.2",
     "socket.io": "^4.7.2",
     "pg": "^8.11.3"
-  },
-  "engines": {
-    "node": ">=14.0.0"
   }
 }
