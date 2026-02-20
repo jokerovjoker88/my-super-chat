@@ -1,69 +1,62 @@
 const socket = io();
-let myName = localStorage.getItem('chat_name') || prompt("Ник:") || "User";
-localStorage.setItem('chat_name', myName);
+const vh = () => document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+window.addEventListener('resize', vh); vh();
 
-document.getElementById('user-display').innerText = myName;
-document.getElementById('user-display-avatar').innerText = myName[0].toUpperCase();
+let myName = localStorage.getItem('chat_name') || prompt("System ID:") || "Node_" + Math.floor(Math.random()*1000);
+localStorage.setItem('chat_name', myName);
 
 const messagesDiv = document.getElementById('messages');
 const msgInput = document.getElementById('msg-input');
-const fileInput = document.getElementById('file-input');
 
 socket.emit('join', { username: myName });
 
+// Виброотклик
+const haptic = () => { if(window.navigator.vibrate) window.navigator.vibrate(10); };
+
 function renderMessage(data) {
-    const isMine = (data.username || data.user) === myName;
+    const isMine = data.username === myName;
     const wrap = document.createElement('div');
     wrap.className = `message-wrapper ${isMine ? 'my-wrapper' : ''}`;
     wrap.setAttribute('data-id', data.id);
 
-    let content = data.content;
-    if (data.msg_type === 'file') {
-        content = `<img src="${content}" style="max-width:100%; border-radius:10px; display:block; margin-top:5px;">`;
-    }
+    const content = data.msg_type === 'file' 
+        ? `<img src="${data.content}" style="max-width:100%; border-radius:15px; margin-top:5px;">`
+        : `<span>${data.content}</span>`;
 
     wrap.innerHTML = `
         <div class="message ${isMine ? 'my-message' : 'other-message'}">
-            <span style="font-size:0.65rem; opacity:0.8; display:block;">${data.username}</span>
+            <div style="font-size:0.6rem; opacity:0.6; margin-bottom:4px;">${data.username}</div>
             ${content}
-            <div class="msg-footer">
-                <span>${data.time || ''}</span>
-                ${isMine ? `<button onclick="socket.emit('delete message', ${data.id})" class="delete-btn"><i class="fa-solid fa-trash-can"></i></button>` : ''}
-            </div>
+            <div style="font-size:0.55rem; text-align:right; margin-top:4px; opacity:0.5;">${data.time || ''}</div>
         </div>
     `;
+    
     messagesDiv.appendChild(wrap);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    messagesDiv.scrollTo({ top: messagesDiv.scrollHeight, behavior: 'smooth' });
 }
 
 socket.on('load history', h => { messagesDiv.innerHTML = ''; h.forEach(renderMessage); });
-socket.on('chat message', renderMessage);
-socket.on('message deleted', id => document.querySelector(`[data-id="${id}"]`)?.remove());
+socket.on('chat message', data => { renderMessage(data); haptic(); });
 
 document.getElementById('send-btn').onclick = () => {
     if(!msgInput.value.trim()) return;
     socket.emit('chat message', { user: myName, text: msgInput.value });
     msgInput.value = '';
+    haptic();
 };
 
+function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); haptic(); }
+
+// Индикатор печати
 msgInput.oninput = () => socket.emit('typing', { user: myName });
 socket.on('display typing', d => {
     const t = document.getElementById('typing-box');
-    t.innerText = `${d.user} печатает...`;
+    t.innerText = d.user + " is calculating...";
     setTimeout(() => t.innerText = '', 3000);
 });
 
-socket.on('update online', users => {
-    document.getElementById('users-box').innerHTML = users.map(u => `
-        <div class="user-item">
-            <div class="avatar-mini" style="width:25px; height:25px; font-size:0.7rem;">${u.name[0]}</div>
-            <span style="font-size:0.85rem;">${u.name}</span>
-        </div>`).join('');
+// Авто-высота textarea
+msgInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
 });
-
-fileInput.onchange = (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = () => socket.emit('chat message', { user: myName, file: reader.result, fileName: file.name, fileType: file.type });
-    reader.readAsDataURL(file);
-};
