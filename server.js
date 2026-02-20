@@ -14,73 +14,74 @@ const db = new Client({
     ssl: { rejectUnauthorized: false }
 });
 
-async function startSystem() {
+async function boot() {
     try {
         await db.connect();
-        console.log("DB Connected. Cleaning old tables...");
-        
-        // ВНИМАНИЕ: Очистка для исправления ошибок структуры
+        // Полная пересборка таблиц без жестких связей
         await db.query(`
-            DROP TABLE IF EXISTS chat_msgs CASCADE;
-            DROP TABLE IF EXISTS user_rooms CASCADE;
-            
-            CREATE TABLE user_rooms (
-                username TEXT,
-                room_name TEXT,
-                PRIMARY KEY (username, room_name)
-            );
-            
-            CREATE TABLE chat_msgs (
+            CREATE TABLE IF NOT EXISTS chat_log (
                 id SERIAL PRIMARY KEY,
                 room TEXT,
                 sender TEXT,
-                text TEXT,
-                time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                content TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS access_list (
+                nick TEXT,
+                room_name TEXT,
+                PRIMARY KEY (nick, room_name)
             );
         `);
-        console.log("System Reconfigured: Tables Ready");
-    } catch (e) { console.error("Critical Start Error:", e); }
+        console.log("=== NEBULA ENGINE READY ===");
+    } catch (e) { console.error("BOOT ERROR:", e); }
 }
-startSystem();
+boot();
 
 io.on('connection', (socket) => {
-    // Получение списка чатов
-    socket.on('get_my_rooms', async (nick) => {
+    // Получить список комнат
+    socket.on('req_rooms', async (nick) => {
         try {
-            const res = await db.query("SELECT room_name FROM user_rooms WHERE username = $1", [nick]);
-            socket.emit('rooms_list', res.rows.map(r => r.room_name));
-        } catch(e) { console.log(e); }
+            const res = await db.query("SELECT room_name FROM access_list WHERE nick = $1", [nick]);
+            socket.emit('res_rooms', res.rows.map(r => r.room_name));
+        } catch (e) { console.error(e); }
     });
 
-    // Вступление/Создание
-    socket.on('join_room', async ({ room, nick }) => {
+    // Вступить или Создать
+    socket.on('enter_room', async ({ room, nick }) => {
         try {
+            // 1. Даем доступ
+            await db.query("INSERT INTO access_list (nick, room_name) VALUES ($1, $2) ON CONFLICT DO NOTHING", [nick, room]);
+            
+            // 2. Подключаем к сокету
             socket.rooms.forEach(r => socket.leave(r));
             socket.join(room);
-            await db.query("INSERT INTO user_rooms (username, room_name) VALUES ($1, $2) ON CONFLICT DO NOTHING", [nick, room]);
+
+            // 3. Грузим историю
+            const history = await db.query("SELECT sender, content FROM chat_log WHERE room = $1 ORDER BY created_at ASC LIMIT 50", [room]);
+            socket.emit('res_history', history.rows);
+
+            // 4. Обновляем список у пользователя
+            const rooms = await db.query("SELECT room_name FROM access_list WHERE nick = $1", [nick]);
+            socket.emit('res_rooms', rooms.rows.map(r => r.room_name));
             
-            const history = await db.query("SELECT sender, text FROM chat_msgs WHERE room = $1 ORDER BY time ASC", [room]);
-            socket.emit('history', history.rows);
-            
-            const myRooms = await db.query("SELECT room_name FROM user_rooms WHERE username = $1", [nick]);
-            socket.emit('rooms_list', myRooms.rows.map(r => r.room_name));
-        } catch(e) { console.log(e); }
+            console.log(`User ${nick} joined ${room}`);
+        } catch (e) { console.error(e); }
     });
 
-    // Добавление пользователя
-    socket.on('add_user', async ({ room, targetNick }) => {
+    // Добавить другого пользователя
+    socket.on('invite_user', async ({ room, target }) => {
         try {
-            await db.query("INSERT INTO user_rooms (username, room_name) VALUES ($1, $2) ON CONFLICT DO NOTHING", [targetNick, room]);
-            io.emit('ping_update', targetNick);
-        } catch(e) { console.log(e); }
+            await db.query("INSERT INTO access_list (nick, room_name) VALUES ($1, $2) ON CONFLICT DO NOTHING", [target, room]);
+            io.emit('trigger_refresh', target);
+        } catch (e) { console.error(e); }
     });
 
     // Сообщение
     socket.on('send_msg', async (data) => {
         try {
-            await db.query("INSERT INTO chat_msgs (room, sender, text) VALUES ($1, $2, $3)", [data.room, data.sender, data.text]);
+            await db.query("INSERT INTO chat_log (room, sender, content) VALUES ($1, $2, $3)", [data.room, data.sender, data.text]);
             io.to(data.room).emit('new_msg', data);
-        } catch(e) { console.log(e); }
+        } catch (e) { console.error(e); }
     });
 });
 
