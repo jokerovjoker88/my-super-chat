@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nebula Prime</title>
+    <title>Nebula Elite</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -14,29 +14,29 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">NEBULA<span>PRO</span></div>
-                <button class="mobile-close" onclick="toggleMenu()"><i class="fa-solid fa-xmark"></i></button>
+                <button class="close-btn" onclick="toggleMenu()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div id="users-box" class="users-list"></div>
-            <div class="profile-dock">
-                <div id="user-display-avatar" class="mini-avatar">?</div>
+            <div class="profile-card">
+                <div id="user-display-avatar" class="avatar-mini">?</div>
                 <span id="user-display">User</span>
             </div>
         </aside>
 
-        <main class="chat-main">
-            <header class="navbar">
-                <button class="menu-trigger" onclick="toggleMenu()"><i class="fa-solid fa-bars-staggered"></i></button>
-                <div class="nav-info">
+        <main class="chat-container">
+            <header class="chat-header">
+                <button class="burger-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars-staggered"></i></button>
+                <div class="header-text">
                     <h2>Global Stream</h2>
-                    <span class="status-ok">● Online</span>
+                    <span>● Online</span>
                 </div>
             </header>
 
-            <div id="messages" class="msg-viewport"></div>
-            <div id="typing-box" class="typing-indicator"></div>
+            <div id="messages" class="messages-flow"></div>
+            <div id="typing-box" class="typing-status"></div>
 
-            <footer class="input-area">
-                <div class="input-wrap">
+            <footer class="input-nexus">
+                <div class="input-bar">
                     <label class="attach-btn">
                         <i class="fa-solid fa-plus"></i>
                         <input type="file" id="file-input" hidden>
@@ -51,7 +51,16 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
     <script>
-        function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
+        // Фикс высоты 100vh для мобилок
+        const fixHeight = () => {
+            document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+        };
+        window.addEventListener('resize', fixHeight);
+        fixHeight();
+
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
     </script>
 </body>
 </html>
