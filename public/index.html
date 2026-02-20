@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nebula Universal</title>
+    <title>Nebula Rooms</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -11,17 +11,26 @@
     <div class="app-shell">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="logo">NEBULA<span>PRO</span></div>
+                <div class="logo">NEBULA<span>ROOMS</span></div>
                 <button class="close-menu" onclick="toggleMenu()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="users-scroll" id="users-box">
+            
+            <div class="section-label">ДОСТУПНЫЕ ЧАТЫ</div>
+            <div class="rooms-list" id="rooms-box">
+                <div class="room-item active" onclick="switchRoom('general')">
+                    <i class="fa-solid fa-hashtag"></i> <span>Общий чат</span>
                 </div>
+                <div class="room-item" onclick="switchRoom('gaming')">
+                    <i class="fa-solid fa-gamepad"></i> <span>Игры</span>
+                </div>
+                <div class="room-item" onclick="switchRoom('work')">
+                    <i class="fa-solid fa-briefcase"></i> <span>Работа</span>
+                </div>
+            </div>
+
             <div class="user-profile">
                 <div id="user-avatar" class="avatar">?</div>
-                <div class="user-info">
-                    <span id="user-name">Loading...</span>
-                    <small>Online</small>
-                </div>
+                <div class="user-info"><span id="user-name">User</span></div>
             </div>
         </aside>
 
@@ -29,8 +38,8 @@
             <header class="top-nav">
                 <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars-staggered"></i></button>
                 <div class="chat-meta">
-                    <h2>Global Core</h2>
-                    <p>End-to-end encrypted</p>
+                    <h2 id="current-room-title">Общий чат</h2>
+                    <p id="online-status">Защищенное соединение</p>
                 </div>
             </header>
 
