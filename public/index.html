@@ -3,38 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nebula V3</title>
+    <title>Nebula Chat</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div class="app">
-        <aside id="aside">
-            <div class="aside-header">
+        <aside id="sidebar">
+            <div class="header-side">
                 <h2>Nebula</h2>
-                <button class="mob" onclick="ui.menu()"><i class="fa-solid fa-xmark"></i></button>
+                <button class="mob-btn" onclick="toggleMenu()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <button class="btn-main" onclick="actions.join()">+ Найти / Создать чат</button>
+            <div id="db-status" class="status-badge">Загрузка...</div>
+            <button class="btn-new" onclick="createOrJoin()">+ Создать / Найти</button>
             <div id="room-list" class="room-list"></div>
-            <div class="my-info">Ваш ник: <b id="display-nick">...</b></div>
+            <div class="profile">Ник: <b id="my-nick">...</b></div>
         </aside>
 
         <main>
-            <header>
-                <div class="h-left">
-                    <button class="mob" onclick="ui.menu()"><i class="fa-solid fa-bars"></i></button>
+            <header class="header-main">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="mob-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
                     <h3 id="chat-title">Выберите чат</h3>
                 </div>
-                <button id="add-btn" class="icon-btn" style="display:none" onclick="actions.invite()">
+                <button id="add-btn" class="icon-btn" style="display:none" onclick="inviteFriend()" title="Добавить друга">
                     <i class="fa-solid fa-user-plus"></i>
                 </button>
             </header>
 
-            <div id="chat-box"></div>
+            <div id="chat-box" class="chat-box"></div>
 
-            <div class="input-pane" id="input-pane" style="display:none">
-                <input type="text" id="msg-input" placeholder="Сообщение..." autocomplete="off">
-                <button onclick="actions.send()"><i class="fa-solid fa-paper-plane"></i></button>
+            <div id="chat-controls" class="controls" style="display:none">
+                <input type="text" id="msg-input" placeholder="Введите сообщение..." autocomplete="off">
+                <button class="btn-send" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </main>
     </div>
