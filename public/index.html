@@ -3,38 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Messenger Pro</title>
+    <title>Gemini Chat Pro</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="app-container">
+    <div class="glass-layout">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h3>В сети</h3>
+                <div class="logo">PRO<span>CHAT</span></div>
             </div>
-            <div id="users-box" class="users-list">
-                </div>
+            <div class="online-status">
+                <i class="fa-solid fa-circle"></i> Пользователи в сети
+            </div>
+            <div id="users-box" class="users-list"></div>
+            <div class="sidebar-footer">
+                <div id="user-display"></div>
+            </div>
         </aside>
 
-        <main class="chat-area">
-            <header class="chat-header">
-                <button id="back-btn" style="display:none;">← Назад</button>
-                <h2 id="chat-title">Общий чат</h2>
-                <span id="user-display"></span>
+        <main class="chat-main">
+            <header class="chat-navbar">
+                <div class="chat-info">
+                    <button id="back-btn" class="back-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                    <h2 id="chat-title">Общий чат</h2>
+                </div>
+                <div class="chat-actions">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </div>
             </header>
 
-            <div id="messages" class="messages-container">
+            <div id="messages" class="messages-viewport">
                 </div>
 
-            <div class="input-container">
-                <button class="icon-btn" onclick="document.getElementById('file-input').click()">📎</button>
-                <input type="file" id="file-input" hidden>
+            <div class="typing-indicator" id="typing-box"></div>
+
+            <footer class="input-bar">
+                <label class="attach-btn">
+                    <i class="fa-solid fa-paperclip"></i>
+                    <input type="file" id="file-input" hidden>
+                </label>
                 
-                <input type="text" id="msg-input" placeholder="Введите сообщение..." autocomplete="off">
+                <input type="text" id="msg-input" placeholder="Написать сообщение..." autocomplete="off">
                 
-                <button id="record-btn" class="icon-btn">🎤</button>
-                <button id="send-btn" class="send-btn">Отправить</button>
-            </div>
+                <div class="action-btns">
+                    <button id="record-btn" class="action-btn"><i class="fa-solid fa-microphone"></i></button>
+                    <button id="send-btn" class="send-trigger"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </footer>
         </main>
     </div>
 
