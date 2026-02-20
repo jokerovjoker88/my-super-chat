@@ -3,90 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula Prime | Secure Chat</title>
+    <title>QuantumFlow Messenger</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="space-bg">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-    </div>
+    <div id="particles-js" class="background-particles"></div>
 
-    <div class="master-container">
-        <aside class="glass-sidebar">
-            <div class="sidebar-top">
-                <div class="logo-wrap">
-                    <div class="logo-core"></div>
-                    <span>NEBULA<strong>PRIME</strong></span>
-                </div>
+    <div class="app-core">
+        <aside class="left-panel">
+            <div class="header-logo">
+                <div class="logo-circle"><i class="fa-solid fa-atom"></i></div>
+                <span>QUANTUM<strong>FLOW</strong></span>
+            </div>
+            
+            <div class="search-module">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" placeholder="Искать в потоках..." class="search-input">
             </div>
 
-            <div class="search-bar-wrap">
-                <div class="search-inner">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Поиск контактов...">
-                </div>
-            </div>
+            <nav class="flow-nav">
+                <div class="nav-section-title">АКТИВНЫЕ ПОТОКИ</div>
+                <div id="users-box" class="flow-list custom-scrollbar"></div>
+            </nav>
 
-            <div class="sidebar-nav">
-                <div class="nav-group-label">АКТИВНЫЕ УЗЛЫ</div>
-                <div id="users-box" class="custom-scroll"></div>
-            </div>
-
-            <div class="current-user-plate">
-                <div class="user-avatar-main" id="user-display-avatar">?</div>
-                <div class="user-meta">
-                    <span id="user-display">Загрузка...</span>
-                    <div class="badge-online"><span class="dot-pulse"></span>Система активна</div>
+            <div class="profile-console">
+                <div class="profile-avatar" id="user-display-avatar">?</div>
+                <div class="profile-info">
+                    <span id="user-display" class="profile-name">Инициализация...</span>
+                    <div class="status-indicator"><span class="pulse-dot"></span>Online</div>
                 </div>
-                <button class="settings-trigger"><i class="fa-solid fa-sliders"></i></button>
+                <button class="settings-btn"><i class="fa-solid fa-gear"></i></button>
             </div>
         </aside>
 
-        <main class="chat-engine">
-            <header class="chat-navbar">
-                <div class="nav-left">
-                    <button id="back-btn" class="nav-icon-btn" style="display:none;"><i class="fa-solid fa-chevron-left"></i></button>
-                    <div class="chat-title-block">
-                        <h2 id="chat-title">Главный поток</h2>
-                        <div class="security-status"><i class="fa-solid fa-shield-halved"></i> Quantum Encrypted</div>
+        <main class="chat-zone">
+            <header class="chat-header-panel">
+                <div class="chat-info-block">
+                    <button id="back-btn" class="nav-back-btn" style="display:none;"><i class="fa-solid fa-arrow-left"></i></button>
+                    <div class="current-chat-meta">
+                        <h2 id="chat-title" class="chat-title-text">Центральный Канал</h2>
+                        <div class="security-status-bar"><i class="fa-solid fa-fingerprint"></i> End-to-End Encrypted</div>
                     </div>
                 </div>
-                <div class="nav-right">
-                    <button class="nav-icon-btn"><i class="fa-solid fa-phone-slash"></i></button>
-                    <button class="nav-icon-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                <div class="chat-actions-bar">
+                    <button class="action-icon"><i class="fa-solid fa-phone"></i></button>
+                    <button class="action-icon"><i class="fa-solid fa-video"></i></button>
+                    <button class="action-icon"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                 </div>
             </header>
 
-            <div id="messages" class="messages-flow custom-scroll">
+            <div id="messages" class="message-stream custom-scrollbar">
                 </div>
 
-            <div class="status-bar" id="typing-box"></div>
+            <div id="typing-box" class="typing-alert"></div>
 
-            <footer class="input-console">
-                <div class="console-inner">
-                    <label class="console-btn attach-trigger">
-                        <i class="fa-solid fa-plus"></i>
+            <footer class="input-nexus">
+                <div class="input-field-group">
+                    <label class="attach-button">
+                        <i class="fa-solid fa-paperclip"></i>
                         <input type="file" id="file-input" hidden>
                     </label>
                     
-                    <textarea id="msg-input" placeholder="Введите ваше сообщение..." rows="1"></textarea>
+                    <textarea id="msg-input" placeholder="Введите ваше сообщение..." rows="1" class="message-input"></textarea>
                     
-                    <div class="console-actions">
-                        <button id="record-btn" class="console-btn mic-trigger"><i class="fa-solid fa-microphone"></i></button>
-                        <button id="send-btn" class="console-send">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
+                    <div class="input-controls">
+                        <button id="record-btn" class="mic-button"><i class="fa-solid fa-microphone"></i></button>
+                        <button id="send-btn" class="send-button"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
                 </div>
             </footer>
         </main>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+        particlesJS('particles-js', {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#00d2ff" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.5, "random": false, "anim": { "enable": false } },
+                "size": { "value": 3, "random": true, "anim": { "enable": false } },
+                "line_linked": { "enable": true, "distance": 150, "color": "#00f2ff", "opacity": 0.4, "width": 1 },
+                "move": { "enable": true, "speed": 6, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false, "attract": { "enable": false, "rotateX": 600, "rotateY": 1200 } }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
+                "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "bubble": { "distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3 }, "repulse": { "distance": 200, "duration": 0.4 }, "push": { "particles_nb": 4 }, "remove": { "particles_nb": 2 } }
+            },
+            "retina_detect": true
+        });
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
