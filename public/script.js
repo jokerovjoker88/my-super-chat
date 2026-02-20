@@ -1,24 +1,23 @@
 const socket = io();
-let myNick = localStorage.getItem('tg_nick') || prompt("Твой ник:");
-localStorage.setItem('tg_nick', myNick);
-document.getElementById('my-name').innerText = myNick;
+let myNick = localStorage.getItem('tg_nick') || prompt("Ваш ник:");
+if (myNick) localStorage.setItem('tg_nick', myNick);
+else window.location.reload();
 
+document.getElementById('my-name').innerText = myNick;
 let activeChat = null;
 const sound = document.getElementById('notif-sound');
 
 socket.emit('auth', myNick);
 socket.on('auth_ok', d => { if(d && d.avatar) document.getElementById('my-ava').src = d.avatar; });
 
-// ФУНКЦИЯ ПОИСКА
+// Поиск и добавление чата
 const findUser = () => {
     const val = document.getElementById('user-search').value.trim();
     if(val && val !== myNick) {
-        // Просто открываем чат. Сервер создаст пользователя сам при отправке сообщения
         openChat(val);
         document.getElementById('user-search').value = '';
     }
 };
-
 document.getElementById('search-btn').onclick = findUser;
 document.getElementById('user-search').onkeypress = (e) => { if(e.key === 'Enter') findUser(); };
 
@@ -27,11 +26,7 @@ function openChat(name) {
     document.getElementById('welcome').style.display = 'none';
     document.getElementById('chat-box').style.display = 'flex';
     document.getElementById('target-name').innerText = name;
-    
-    if(window.innerWidth <= 600) {
-        document.getElementById('sidebar').classList.add('hidden');
-    }
-    
+    if(window.innerWidth <= 600) document.getElementById('sidebar').style.display = 'none';
     socket.emit('load_chat', { me: myNick, him: name });
     socket.emit('get_my_dialogs', myNick);
 }
@@ -45,10 +40,7 @@ socket.on('dialogs_list', list => {
         const ava = d.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
         el.innerHTML = `
             <div class="ava-wrap ${d.is_online?'on':''}"><img src="${ava}"></div>
-            <div class="d-info">
-                <b>${d.partner}</b>
-                ${d.unread > 0 ? `<span class="badge">${d.unread}</span>` : ''}
-            </div>`;
+            <div class="d-info"><b>${d.partner}</b>${d.unread > 0 ? `<span class="badge">${d.unread}</span>` : ''}</div>`;
         el.onclick = () => openChat(d.partner);
         box.appendChild(el);
     });
@@ -98,14 +90,14 @@ const toBase64 = f => new Promise(res => {
 
 document.getElementById('send-btn').onclick = send;
 document.getElementById('msg-input').onkeypress = e => { if(e.key==='Enter') send(); };
-document.getElementById('back-btn').onclick = () => document.getElementById('sidebar').classList.remove('hidden');
-
-// Аватарка
+document.getElementById('back-btn').onclick = () => {
+    document.getElementById('sidebar').style.display = 'flex';
+    document.getElementById('chat-box').style.display = 'none';
+};
 document.getElementById('ava-input').onchange = async e => {
     const base64 = await toBase64(e.target.files[0]);
     socket.emit('update_avatar', base64);
     document.getElementById('my-ava').src = base64;
 };
-
 socket.on('refresh_chats', () => socket.emit('get_my_dialogs', myNick));
 socket.on('status_update', () => socket.emit('get_my_dialogs', myNick));
