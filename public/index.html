@@ -13,7 +13,10 @@
             <div id="user-display">Загрузка...</div>
         </header>
         <main>
-            <div id="messages"></div>
+            <div id="main-area">
+                <div id="messages"></div>
+                <div id="typing-status"></div>
+            </div>
             <aside id="sidebar">
                 <div class="sidebar-title">В СЕТИ</div>
                 <div id="users-box"></div>
@@ -24,6 +27,8 @@
             <button id="send-btn">ОТПРАВИТЬ</button>
         </div>
     </div>
+
+    <audio id="msg-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
