@@ -2,40 +2,27 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nebula Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula Telegram</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <div class="app">
-        <aside id="sidebar">
-            <div class="header-side">
-                <h2>Nebula</h2>
-                <button class="mob-btn" onclick="toggleMenu()"><i class="fa-solid fa-xmark"></i></button>
+    <div class="messenger">
+        <aside class="contacts" id="sidebar">
+            <div class="search-box">
+                <input type="text" id="find-user" placeholder="Поиск ника...">
+                <button onclick="app.findUser()"><i class="fa-solid fa-plus"></i></button>
             </div>
-            <div id="db-status" class="status-badge">Загрузка...</div>
-            <button class="btn-new" onclick="createOrJoin()">+ Создать / Найти</button>
-            <div id="room-list" class="room-list"></div>
-            <div class="profile">Ник: <b id="my-nick">...</b></div>
+            <div id="chat-list" class="chat-list"></div>
         </aside>
 
-        <main>
-            <header class="header-main">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <button class="mob-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
-                    <h3 id="chat-title">Выберите чат</h3>
-                </div>
-                <button id="add-btn" class="icon-btn" style="display:none" onclick="inviteFriend()" title="Добавить друга">
-                    <i class="fa-solid fa-user-plus"></i>
-                </button>
-            </header>
-
-            <div id="chat-box" class="chat-box"></div>
-
-            <div id="chat-controls" class="controls" style="display:none">
-                <input type="text" id="msg-input" placeholder="Введите сообщение..." autocomplete="off">
-                <button class="btn-send" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+        <main class="chat-area">
+            <header id="chat-header">Выберите чат</header>
+            <div id="messages" class="messages"></div>
+            <div class="input-zone" id="input-zone" style="display:none">
+                <input type="text" id="m-input" placeholder="Написать сообщение...">
+                <button onclick="app.send()"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </main>
     </div>
