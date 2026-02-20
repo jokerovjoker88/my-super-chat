@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nebula Messenger</title>
+    <title>Nebula Chat</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -15,27 +15,21 @@
                     <img id="my-ava" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
                     <input type="file" id="ava-input" hidden accept="image/*">
                 </label>
-                <div class="my-info">
-                    <b id="my-name">...</b>
-                    <small>online</small>
-                </div>
+                <div class="my-info"><b id="my-name">...</b></div>
             </div>
             <div class="search-box">
-                <input type="text" id="user-search" placeholder="Поиск ника..." inputmode="search">
+                <input type="text" id="user-search" placeholder="Ник друга..." inputmode="search">
                 <button id="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
             <div id="dialogs" class="dialogs"></div>
         </aside>
 
         <main class="chat-view">
-            <div id="welcome" class="centered">Выберите чат</div>
+            <div id="welcome" class="centered">Выберите, кому написать</div>
             <div id="chat-box" style="display: none; flex-direction: column; height: 100%;">
                 <header class="chat-header">
                     <button id="back-btn" class="mobile-only"><i class="fa-solid fa-arrow-left"></i></button>
-                    <div class="header-user">
-                        <span id="target-name">...</span>
-                        <small id="target-status"></small>
-                    </div>
+                    <span id="target-name">...</span>
                 </header>
                 <div id="messages" class="messages"></div>
                 <footer class="input-bar">
