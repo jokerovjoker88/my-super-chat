@@ -33,7 +33,6 @@ db.connect()
     .catch(e => console.error("DB Error:", e));
 
 io.on('connection', (socket) => {
-    // Отправляем статус БД при подключении
     socket.emit('server_status', dbStatus);
 
     // Загрузка меню слева
@@ -47,20 +46,14 @@ io.on('connection', (socket) => {
     // Создать или войти в чат
     socket.on('join_room', async ({ room, nick }) => {
         try {
-            // 1. Добавляем юзера в чат в базе
             await db.query("INSERT INTO my_rooms (username, room_name) VALUES ($1, $2) ON CONFLICT DO NOTHING", [nick, room]);
             
-            // 2. Подключаем сокет к каналу
             socket.rooms.forEach(r => socket.leave(r));
             socket.join(room);
 
-            // 3. Достаем историю
             const hist = await db.query("SELECT sender, msg_text FROM my_messages WHERE room_name = $1 ORDER BY created_at ASC LIMIT 100", [room]);
-            
-            // 4. Отправляем команду: ОТКРОЙ ЧАТ!
             socket.emit('room_joined', { room: room, history: hist.rows });
 
-            // 5. Обновляем список слева
             const res = await db.query("SELECT room_name FROM my_rooms WHERE username = $1", [nick]);
             socket.emit('rooms_list', res.rows.map(r => r.room_name));
         } catch (e) { console.error(e); }
@@ -74,12 +67,10 @@ io.on('connection', (socket) => {
         } catch (e) { console.error(e); }
     });
 
-    // Добавить друга
-    socket.on('invite', async ({ room, target }) => {
-        try {
-            await db.query("INSERT INTO my_rooms (username, room_name) VALUES ($1, $2) ON CONFLICT DO NOTHING", [target, room]);
-            io.emit('invited', target); // Сигнал всем
-        } catch (e) {}
+    // НОВОЕ: Отправка приглашения
+    socket.on('send_invite', ({ from, to, room }) => {
+        // Рассылаем всем, но на клиенте сработает только у нужного юзера
+        io.emit('incoming_invite', { from, to, room });
     });
 });
 
