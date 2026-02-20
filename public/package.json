@@ -1,6 +1,6 @@
 {
-  "name": "super-chat-db",
-  "version": "1.0.0",
+  "name": "nebula-prime-chat",
+  "version": "1.1.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
