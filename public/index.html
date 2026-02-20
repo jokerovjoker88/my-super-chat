@@ -3,53 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nebula Private Rooms</title>
+    <title>Nebula Messenger</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <div class="app-shell">
+    <div class="app">
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">NEBULA<span>ROOMS</span></div>
-                <button onclick="toggleMenu()" class="close-menu"><i class="fa-solid fa-xmark"></i></button>
+            <div class="side-head">
+                <h2>Чаты</h2>
+                <button onclick="toggleMenu()" class="mob-btn"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            
-            <div class="rooms-actions">
-                <button onclick="createRoom()" class="btn-create"><i class="fa-solid fa-plus"></i> Создать чат</button>
-            </div>
-
-            <div class="rooms-list" id="rooms-box">
-                </div>
-
-            <div class="user-profile">
-                <div id="user-avatar" class="avatar">?</div>
-                <div class="user-info"><span id="user-name">User</span></div>
-            </div>
+            <button class="add-chat-btn" onclick="createRoomPrompt()">+ Создать чат</button>
+            <div id="room-list" class="room-list"></div>
+            <div class="my-id">Ваш ник: <b id="me">?</b></div>
         </aside>
 
-        <main class="chat-main">
-            <header class="top-nav">
-                <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars-staggered"></i></button>
-                <div class="chat-meta">
-                    <h2 id="room-title">Выберите чат</h2>
-                </div>
-                <button id="invite-btn" class="btn-invite" style="display:none;" onclick="inviteUser()">
-                    <i class="fa-solid fa-user-plus"></i>
-                </button>
+        <main class="chat">
+            <header class="chat-head">
+                <button onclick="toggleMenu()" class="mob-btn"><i class="fa-solid fa-bars"></i></button>
+                <h2 id="cur-room-name">Выберите чат</h2>
+                <button id="add-user-btn" style="display:none" onclick="addUserPrompt()"><i class="fa-solid fa-user-plus"></i></button>
             </header>
-
-            <div id="messages" class="messages-area"></div>
-
-            <footer class="input-section" id="input-footer" style="display:none;">
-                <div class="input-container">
-                    <textarea id="msg-input" placeholder="Введите сообщение..." rows="1"></textarea>
-                    <button id="send-btn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </footer>
+            <div id="msgs" class="msgs"></div>
+            <div class="input-area" id="input-zone" style="display:none">
+                <input type="text" id="m-input" placeholder="Сообщение...">
+                <button id="s-btn"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
         </main>
     </div>
-
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
