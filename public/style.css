@@ -1,64 +1,57 @@
-/* Общие настройки */
-* { box-sizing: border-box; }
+:root {
+    --bg-main: #18191c;
+    --bg-chat: #2b2d31;
+    --accent: #5865f2;
+    --text: #ffffff;
+    --text-muted: #949ba4;
+}
+
 body { 
-    margin: 0; background-color: #1e1f22; 
-    font-family: 'Segoe UI', Tahoma, sans-serif;
+    margin: 0; background: var(--bg-main); 
+    font-family: 'Inter', sans-serif;
     display: flex; justify-content: center; align-items: center; height: 100vh;
 }
 
 #chat-container {
-    width: 95vw; max-width: 1100px; height: 90vh;
-    background: #313338; display: flex; flex-direction: column;
-    border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    width: 95vw; max-width: 1000px; height: 85vh;
+    background: var(--bg-chat); display: flex; flex-direction: column;
+    border-radius: 20px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
 }
 
-/* Шапка сайта */
 header {
-    background: #2b2d31; padding: 15px 25px; color: white;
+    background: rgba(43, 45, 49, 0.8); backdrop-filter: blur(10px);
+    padding: 15px 25px; border-bottom: 1px solid #1e1f22;
     display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid #1e1f22;
 }
 
-#logo { display: flex; align-items: center; gap: 10px; font-size: 18px; }
-#logo span { color: #5865f2; font-weight: bold; }
-
-/* Кнопка выхода из привата */
-#back-btn {
-    background: #da373c; color: white; border: none;
-    padding: 6px 12px; border-radius: 4px; cursor: pointer;
-    font-weight: bold; font-size: 12px; transition: 0.2s;
+/* Кнопки иконок */
+.icon-btn {
+    background: none; border: none; font-size: 20px; cursor: pointer;
+    padding: 5px; transition: 0.2s; border-radius: 50%;
 }
-#back-btn:hover { background: #a1282c; }
+.icon-btn:hover { background: #3f4147; transform: scale(1.1); }
+.recording { color: #f23f43 !important; animation: blink 1s infinite; }
 
-/* Основная рабочая область */
-main { display: flex; flex: 1; overflow: hidden; }
-#main-area { flex: 3; display: flex; flex-direction: column; background: #313338; }
+@keyframes blink { 50% { opacity: 0.5; } }
 
-#messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
-
-#typing-status { 
-    padding: 5px 20px; font-size: 12px; color: #949ba4; 
-    height: 25px; font-style: italic; 
+/* Сообщения */
+.message { 
+    padding: 12px 16px; border-radius: 18px; line-height: 1.5;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
+.my-message { background: linear-gradient(135deg, #5865f2, #4752c4); }
+.other-message { background: #383a40; }
 
-/* Боковая панель со списком пользователей */
-#sidebar { 
-    flex: 1; background: #2b2d31; padding: 20px; 
-    border-left: 1px solid #1e1f22; color: #dbdee1;
+/* Стили для вложений */
+.attachment-img { max-width: 250px; border-radius: 10px; margin-top: 10px; display: block; }
+.attachment-file { 
+    display: flex; align-items: center; gap: 10px; 
+    background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px; text-decoration: none; color: white;
 }
 
-.sidebar-title { 
-    font-size: 11px; font-weight: bold; margin-bottom: 15px; 
-    color: #949ba4; letter-spacing: 1px; text-transform: uppercase;
-}
-
+/* Пользователи */
 .user-item {
-    padding: 10px; cursor: pointer; border-radius: 8px;
-    transition: 0.2s; display: flex; align-items: center;
-    margin-bottom: 5px; color: #dbdee1;
+    display: flex; align-items: center; gap: 10px; padding: 12px;
+    border-radius: 10px; transition: 0.3s;
 }
-.user-item:hover { background: #393c41; color: white; }
-
-.status-dot {
-    width: 8px; height: 8px; background: #23a55a;
-    border-radius: 50%; margin-right: 12px;
+.user-item:hover { background: #35373c; }
