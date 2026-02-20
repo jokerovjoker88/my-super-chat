@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messenger Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Резервный стиль, чтобы не было белого экрана */
+        body { background-color: #1e1f22; color: white; font-family: sans-serif; margin: 0; }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <header>
+            <div style="display: flex; align-items: center;">
+                <div style="width: 10px; height: 10px; background: #23a55a; border-radius: 50%; margin-right: 10px;"></div>
+                <strong>Глобальный чат</strong>
+            </div>
+            <span id="user-display">Загрузка...</span>
+        </header>
+        
+        <main>
+            <div id="messages"></div>
+            <aside id="online-sidebar">
+                <div style="font-size: 12px; color: #949ba4; margin-bottom: 10px;">В СЕТИ</div>
+                <div id="users-box"></div>
+            </aside>
+        </main>
+
+        <div id="input-area">
+            <input type="text" id="msg-input" placeholder="Введите сообщение..." autocomplete="off">
+            <button id="send-btn">Отправить</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
