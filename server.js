@@ -17,8 +17,10 @@ const db = new Client({
 async function boot() {
     try {
         await db.connect();
+        
+        // Создаем таблицы, если их вообще нет
         await db.query(`
-            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, avatar TEXT, is_online BOOLEAN DEFAULT FALSE);
+            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, avatar TEXT);
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
                 sender TEXT,
@@ -30,8 +32,15 @@ async function boot() {
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        console.log("=== SERVER IS LIVE ===");
-    } catch (e) { console.error(e); }
+
+        // ПРИНУДИТЕЛЬНО добавляем колонки, если база старая (исправляет твою ошибку)
+        await db.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
+        `);
+
+        console.log("=== NEBULA SERVER READY & DATABASE FIXED ===");
+    } catch (e) { console.error("BOOT ERROR:", e); }
 }
 boot();
 
