@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messenger Pro</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="chat-container">
         <header>
-            <div id="logo">💬 <span id="chat-title">Общий чат</span></div>
-            <button id="back-btn" style="display:none;">← Выйти</button>
+            <div id="logo">🚀 <span id="chat-title">Общий чат</span></div>
+            <button id="back-btn" style="display:none;">← Назад</button>
             <div id="user-display"></div>
         </header>
         <main>
@@ -19,16 +20,21 @@
                 <div id="typing-status"></div>
             </div>
             <aside id="sidebar">
-                <div class="sidebar-title">ЛЮДИ (нажми для привата)</div>
+                <div class="sidebar-title">В СЕТИ</div>
                 <div id="users-box"></div>
             </aside>
         </main>
         <div id="input-area">
-            <input type="text" id="msg-input" placeholder="Сообщение..." autocomplete="off">
+            <label for="file-input" class="icon-btn">📎</label>
+            <input type="file" id="file-input" style="display:none;">
+            
+            <input type="text" id="msg-input" placeholder="Напишите сообщение..." autocomplete="off">
+            
+            <button id="record-btn" class="icon-btn">🎤</button>
             <button id="send-btn">ОТПРАВИТЬ</button>
         </div>
     </div>
-    <audio id="msg-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
+    <audio id="msg-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
