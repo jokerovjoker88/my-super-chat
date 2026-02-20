@@ -15,7 +15,7 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-s
 .ava-wrap img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .ava-wrap.on::after { content: ''; position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; background: var(--online); border-radius: 50%; border: 2px solid var(--side); }
 .badge { background: #5085b1; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: auto; }
-.chat-view { flex: 1; display: flex; flex-direction: column; }
+.chat-view { flex: 1; display: flex; flex-direction: column; position: relative; }
 .centered { margin: auto; opacity: 0.4; text-align: center; }
 .chat-header { padding: 15px; background: var(--side); display: flex; align-items: center; gap: 15px; font-weight: bold; }
 .messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
@@ -27,4 +27,4 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-s
 .input-bar input { flex: 1; background: none; border: none; color: #fff; font-size: 16px; outline: none; }
 #send-btn, .attach { color: #5085b1; font-size: 1.4rem; cursor: pointer; background: none; border: none; }
 .mobile-only { display: none; }
-@media (max-width: 600px) { .sidebar { width: 100%; } .mobile-only { display: block; } }
+@media (max-width: 600px) { .sidebar { width: 100%; } .mobile-only { display: block; } }ы
