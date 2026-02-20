@@ -14,69 +14,56 @@ const db = new Client({
     ssl: { rejectUnauthorized: false }
 });
 
-// Инициализация БД
 async function initDB() {
     try {
         await db.connect();
-        // Таблица для хранения сообщений
+        // Сообщения
         await db.query(`CREATE TABLE IF NOT EXISTS msgs (
-            id SERIAL PRIMARY KEY, 
-            sender TEXT, 
-            txt TEXT, 
-            room TEXT, 
-            ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            id SERIAL PRIMARY KEY, sender TEXT, txt TEXT, room TEXT, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
-        // Таблица прав доступа к комнатам
+        // Доступы (кто в каких чатах состоит)
         await db.query(`CREATE TABLE IF NOT EXISTS room_users (
-            room_id TEXT, 
-            user_nick TEXT, 
-            PRIMARY KEY (room_id, user_nick)
+            room_id TEXT, user_nick TEXT, PRIMARY KEY (room_id, user_nick)
         )`);
-        console.log("DB Ready");
-    } catch (e) { console.error("DB Init Error:", e); }
+        console.log("Database Connected & Synced");
+    } catch (e) { console.error("DB Error:", e); }
 }
 initDB();
 
 io.on('connection', (socket) => {
-    // Получение списка чатов пользователя
+    // Список чатов пользователя
     socket.on('get_rooms', async (nick) => {
-        try {
-            const res = await db.query("SELECT room_id FROM room_users WHERE user_nick = $1", [nick]);
-            socket.emit('list_rooms', res.rows.map(r => r.room_id));
-        } catch (e) { console.error(e); }
+        const res = await db.query("SELECT room_id FROM room_users WHERE user_nick = $1", [nick]);
+        socket.emit('list_rooms', res.rows.map(r => r.room_id));
     });
 
-    // Создание чата
-    socket.on('create_room', async ({ room, nick }) => {
+    // Создать или Вступить в чат
+    socket.on('join_new_room', async ({ room, nick }) => {
         try {
             await db.query("INSERT INTO room_users (room_id, user_nick) VALUES ($1, $2) ON CONFLICT DO NOTHING", [room, nick]);
-            socket.emit('update_ui');
+            socket.emit('update_ui', room); 
         } catch (e) { console.error(e); }
     });
 
-    // Добавление друга по нику
+    // Добавить другого (приглашение)
     socket.on('add_friend', async ({ room, friend }) => {
         try {
             await db.query("INSERT INTO room_users (room_id, user_nick) VALUES ($1, $2) ON CONFLICT DO NOTHING", [room, friend]);
-            io.emit('refresh_for', friend); // Сигнал конкретному юзеру обновить список
+            io.emit('refresh_for', friend);
         } catch (e) { console.error(e); }
     });
 
-    // Вход в чат и загрузка истории
+    // Загрузка сообщений
     socket.on('join_chat', async ({ room }) => {
         socket.join(room);
-        try {
-            const res = await db.query("SELECT * FROM msgs WHERE room = $1 ORDER BY ts ASC", [room]);
-            socket.emit('history', res.rows);
-        } catch (e) { console.error(e); }
+        const res = await db.query("SELECT * FROM msgs WHERE room = $1 ORDER BY ts ASC", [room]);
+        socket.emit('history', res.rows);
     });
 
-    // Отправка сообщения
+    // Отправка
     socket.on('msg', async (data) => {
-        try {
-            await db.query("INSERT INTO msgs (sender, txt, room) VALUES ($1, $2, $3)", [data.nick, data.txt, data.room]);
-            io.to(data.room).emit('new_msg', data);
-        } catch (e) { console.error(e); }
+        await db.query("INSERT INTO msgs (sender, txt, room) VALUES ($1, $2, $3)", [data.nick, data.txt, data.room]);
+        io.to(data.room).emit('new_msg', data);
     });
 });
 
