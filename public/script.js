@@ -3,28 +3,29 @@ let myNick = localStorage.getItem('tg_nick') || prompt("Ваш ник:");
 if (myNick) localStorage.setItem('tg_nick', myNick);
 else window.location.reload();
 
-document.getElementById('my-name').innerText = myNick;
+const myNameEl = document.getElementById('my-name');
+if(myNameEl) myNameEl.innerText = myNick;
+
 let activeChat = null;
 let typingTimer;
 const sound = document.getElementById('notif-sound');
 
 socket.emit('auth', myNick);
-socket.on('auth_ok', d => { if(d?.avatar) document.getElementById('my-ava').src = d.avatar; });
-
-// Отслеживание ввода текста
-document.getElementById('msg-input').addEventListener('input', () => {
-    if (activeChat) {
-        socket.emit('typing', { to: activeChat, from: myNick });
-    }
+socket.on('auth_ok', d => { 
+    if(d?.avatar) document.getElementById('my-ava').src = d.avatar; 
 });
 
-// Слушаем статус "печатает" от собеседника
+// Печатает...
+document.getElementById('msg-input').addEventListener('input', () => {
+    if (activeChat) socket.emit('typing', { to: activeChat, from: myNick });
+});
+
 socket.on('user_typing', ({ from }) => {
     if (activeChat === from) {
-        const statusEl = document.getElementById('typing-status');
-        statusEl.innerText = 'печатает...';
+        const el = document.getElementById('typing-status');
+        el.innerText = 'печатает...';
         clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => { statusEl.innerText = ''; }, 2000);
+        typingTimer = setTimeout(() => { el.innerText = ''; }, 2000);
     }
 });
 
@@ -86,12 +87,10 @@ function render(s, t, f, fn, time, id, isRead) {
     const box = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = `msg-row ${s === myNick ? 'me' : 'them'}`;
-    
     const tickClass = isRead ? 'fa-check-double' : 'fa-check';
     const ticks = s === myNick ? `<i class="fa-solid ${tickClass} status-tick"></i>` : '';
-
     d.innerHTML = `<div class="bubble">
-        ${f ? (f.startsWith('data:image') ? `<img src="${f}" style="max-width:100%">` : `<a href="${f}" download="${fn}">📁 ${fn}</a>`) : ''}
+        ${f ? (f.startsWith('data:image') ? `<img src="${f}">` : `<a href="${f}" download="${fn}">📁 ${fn}</a>`) : ''}
         <span>${t || ''}</span>
         <div class="msg-meta"><small>${time || ''}</small>${ticks}</div>
     </div>`;
@@ -116,8 +115,7 @@ socket.on('dialogs_list', list => {
     list.forEach(d => {
         const el = document.createElement('div');
         el.className = `dialog-item ${activeChat === d.partner ? 'active' : ''}`;
-        el.innerHTML = `
-            <div class="ava-wrap ${d.is_online?'on':''}"><img src="${d.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"></div>
+        el.innerHTML = `<div class="ava-wrap ${d.is_online?'on':''}"><img src="${d.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"></div>
             <div class="d-info"><b>${d.partner}</b>${d.unread > 0 ? `<span class="badge">${d.unread}</span>` : ''}</div>`;
         el.onclick = () => openChat(d.partner);
         box.appendChild(el);
