@@ -1,90 +1,82 @@
 const socket = io();
-let nick = localStorage.getItem('chat_nick') || prompt("Твой ник:");
-if (!nick) nick = "User" + Math.floor(Math.random() * 1000);
-localStorage.setItem('chat_nick', nick);
-document.getElementById('my-nick').innerText = nick;
+let myNick = localStorage.getItem('nebula_nick') || prompt("Введите ваш Ник:");
+if(!myNick) myNick = 'User_' + Math.floor(Math.random()*999);
+localStorage.setItem('nebula_nick', myNick);
+document.getElementById('my-id').innerText = myNick;
 
 let activeRoom = null;
 
-// Загрузка списка чатов пользователя
-function loadRooms() {
-    socket.emit('get_rooms', nick);
-}
-loadRooms();
+// Инициализация
+const refreshRooms = () => socket.emit('fetch_rooms', myNick);
+refreshRooms();
 
-// Получение списка и отрисовка
-socket.on('list_rooms', rooms => {
+// Поиск / Создание
+function joinPrompt() {
+    const name = prompt("Название чата:");
+    if(name) socket.emit('access_room', { room: name.trim(), nick: myNick });
+}
+
+// Приглашение
+function inviteFriend() {
+    const friend = prompt("Ник пользователя для добавления:");
+    if(friend) socket.emit('invite_friend', { room: activeRoom, friend: friend.trim() });
+}
+
+// Вход в чат
+function selectChat(name) {
+    activeRoom = name;
+    document.getElementById('current-title').innerText = name;
+    document.getElementById('invite-icon').style.display = 'block';
+    document.getElementById('footer').style.display = 'flex';
+    socket.emit('join_session', { room: name });
+    refreshRooms();
+    if(window.innerWidth < 768) toggleMenu();
+}
+
+// Рендер сообщений
+socket.on('chat_history', msgs => {
+    const flow = document.getElementById('chat-flow');
+    flow.innerHTML = '';
+    msgs.forEach(m => render(m.sender, m.txt));
+});
+
+socket.on('broadcast_msg', m => {
+    if(m.room === activeRoom) render(m.nick, m.txt);
+});
+
+function render(s, t) {
+    const flow = document.getElementById('chat-flow');
+    const d = document.createElement('div');
+    const isMe = s === myNick;
+    d.className = `msg-wrap ${isMe ? 'me' : ''}`;
+    d.innerHTML = `<div class="msg"><b>${s}</b><p>${t}</p></div>`;
+    flow.appendChild(d);
+    flow.scrollTop = flow.scrollHeight;
+}
+
+// Отправка
+function send() {
+    const inp = document.getElementById('msg-input');
+    if(inp.value.trim() && activeRoom) {
+        socket.emit('push_msg', { nick: myNick, txt: inp.value, room: activeRoom });
+        inp.value = '';
+    }
+}
+
+// Служебные события
+socket.on('rooms_update', rooms => {
     const list = document.getElementById('room-list');
     list.innerHTML = '';
     rooms.forEach(r => {
-        const d = document.createElement('div');
-        d.className = `room ${activeRoom === r ? 'active' : ''}`;
-        d.innerHTML = `<i class="fa-solid fa-hashtag"></i> ${r}`;
-        d.onclick = () => selectRoom(r);
-        list.appendChild(d);
+        const btn = document.createElement('div');
+        btn.className = `room-btn ${activeRoom === r ? 'active' : ''}`;
+        btn.innerHTML = `<i class="fa-solid fa-hashtag"></i> ${r}`;
+        btn.onclick = () => selectChat(r);
+        list.appendChild(btn);
     });
 });
 
-// Функция: Вступить или Создать чат
-function joinChatPrompt() {
-    const r = prompt("Введите название чата (если чата нет, он будет создан):");
-    if (r && r.trim().length > 0) {
-        socket.emit('join_new_room', { room: r.trim(), nick: nick });
-    }
-}
+socket.on('access_granted', room => selectChat(room));
+socket.on('notify_invite', target => { if(target === myNick) refreshRooms(); });
 
-// Пригласить друга
-function invite() {
-    const friend = prompt("Ник пользователя, которого хотите добавить в этот чат:");
-    if (friend) socket.emit('add_friend', { room: activeRoom, friend: friend });
-}
-
-function selectRoom(r) {
-    activeRoom = r;
-    document.getElementById('chat-name').innerText = r;
-    document.getElementById('add-u').style.display = 'block';
-    document.getElementById('controls').style.display = 'flex';
-    socket.emit('join_chat', { room: r });
-    loadRooms(); // Обновляем выделение в списке
-    if (window.innerWidth < 768) menu();
-}
-
-// Сообщения
-socket.on('history', msgs => {
-    const box = document.getElementById('chat-box');
-    box.innerHTML = '';
-    msgs.forEach(m => addMessage(m.sender, m.txt));
-});
-
-socket.on('new_msg', data => {
-    if (data.room === activeRoom) addMessage(data.nick, data.txt);
-});
-
-function addMessage(sender, txt) {
-    const box = document.getElementById('chat-box');
-    const d = document.createElement('div');
-    const isMe = sender === nick;
-    d.className = `m ${isMe ? 'me' : ''}`;
-    d.innerHTML = `<small>${sender}</small><span>${txt}</span>`;
-    box.appendChild(d);
-    box.scrollTop = box.scrollHeight;
-}
-
-function send() {
-    const i = document.getElementById('m-text');
-    if (i.value.trim() && activeRoom) {
-        socket.emit('msg', { nick, txt: i.value, room: activeRoom });
-        i.value = '';
-    }
-}
-
-function enter(e) { if (e.key === 'Enter') send(); }
-
-socket.on('update_ui', (targetRoom) => {
-    loadRooms();
-    if(targetRoom) selectRoom(targetRoom);
-});
-
-socket.on('refresh_for', target => { if (target === nick) loadRooms(); });
-
-function menu() { document.getElementById('side').classList.toggle('active'); }
+function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
