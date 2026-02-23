@@ -1,6 +1,12 @@
 :root { --bg: #0e1621; --side: #17212b; --acc: #2b5278; --text: #fff; --accent-blue: #40a7e3; }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
 
+/* ГЛАЗИК */
+.pass-box { position: relative; width: 100%; }
+.pass-box input { width: 100%; padding-right: 40px !important; box-sizing: border-box; }
+.toggle-pass { position: absolute; right: 15px; top: 12px; color: #84919a; cursor: pointer; }
+
+/* ОБОИ */
 .pattern-bg {
     background-color: #0b141a;
     background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
@@ -9,12 +15,12 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-s
 }
 
 .search-box { position: relative; padding: 10px; display: flex; align-items: center; background: #1c2733; }
-.search-icon { position: absolute; left: 22px; color: #84919a; font-size: 0.9rem; }
+.search-icon { position: absolute; left: 22px; color: #84919a; }
 .search-box input { padding-left: 35px !important; width: 100%; background: #242f3d; border: none; color: white; padding: 10px; border-radius: 8px; outline: none; }
 #search-btn { background: none; border: none; color: var(--accent-blue); font-size: 1.2rem; cursor: pointer; margin-left: 5px; }
 
 .auth-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; }
-.auth-card { background: var(--side); padding: 40px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; width: 320px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.auth-card { background: var(--side); padding: 40px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; width: 320px; text-align: center; }
 .auth-card input { padding: 12px; border-radius: 10px; border: 1px solid #333; background: #242f3d; color: #fff; outline: none; }
 .auth-card button { padding: 12px; border-radius: 10px; border: none; background: var(--accent-blue); color: white; cursor: pointer; font-weight: bold; }
 .logo i { font-size: 3rem; color: var(--accent-blue); margin-bottom: 10px; }
