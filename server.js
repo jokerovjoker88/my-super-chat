@@ -16,7 +16,6 @@ const db = new Client({
     ssl: { rejectUnauthorized: false }
 });
 
-// НАСТРОЙКА ПОЧТЫ (Впиши свои данные здесь)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -28,88 +27,63 @@ const transporter = nodemailer.createTransport({
 async function boot() {
     try {
         await db.connect();
-        await db.query("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, email TEXT, password TEXT)");
-        await db.query("CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, sender TEXT, receiver TEXT, content TEXT, is_read BOOLEAN DEFAULT FALSE, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
-        console.log("=== SERVER ONLINE ===");
-    } catch (e) { 
-        console.error("DB BOOT ERROR:", e); 
-    }
+        // Добавлено поле avatar_url
+        await db.query(`CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY, 
+            email TEXT, 
+            password TEXT, 
+            avatar_url TEXT DEFAULT 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
+        )`);
+        await db.query(`CREATE TABLE IF NOT EXISTS messages (
+            id SERIAL PRIMARY KEY, 
+            sender TEXT, 
+            receiver TEXT, 
+            content TEXT, 
+            is_read BOOLEAN DEFAULT FALSE, 
+            ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+        console.log("=== NEBULA V2 ONLINE ===");
+    } catch (e) { console.error(e); }
 }
 boot();
 
 io.on('connection', (socket) => {
-    // Регистрация
-    socket.on('register', async (data) => {
+    socket.on('register', async (d) => {
         try {
-            const hashed = await bcrypt.hash(data.pass, 10);
-            const sql = "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)";
-            await db.query(sql, [data.nick, data.email, hashed]);
-            
-            transporter.sendMail({
-                from: '"Nebula Chat"',
-                to: data.email,
-                subject: 'Добро пожаловать!',
-                text: `Привет, ${data.nick}! Регистрация прошла успешно.`
-            }).catch(e => console.log("Mail background error"));
-
-            socket.emit('auth_success', 'Регистрация успешна!');
-        } catch (e) { 
-            socket.emit('auth_error', 'Ник или Email уже заняты'); 
-        }
+            const hashed = await bcrypt.hash(d.pass, 10);
+            await db.query("INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", [d.nick, d.email, hashed]);
+            transporter.sendMail({ from: '"Nebula"', to: d.email, subject: 'Welcome!', text: 'Вы зарегистрированы!' }).catch(() => {});
+            socket.emit('auth_success', 'Успех!');
+        } catch (e) { socket.emit('auth_error', 'Ошибка регистрации'); }
     });
 
-    // Вход
-    socket.on('login', async (data) => {
-        try {
-            const res = await db.query("SELECT * FROM users WHERE username = $1", [data.nick]);
-            const user = res.rows[0];
-            if (user && await bcrypt.compare(data.pass, user.password)) {
-                socket.username = data.nick;
-                socket.join(data.nick);
-                socket.emit('auth_ok', { nick: data.nick });
-            } else {
-                socket.emit('auth_error', 'Неверный логин или пароль');
-            }
-        } catch (e) {
-            socket.emit('auth_error', 'Ошибка сервера при входе');
-        }
+    socket.on('login', async (d) => {
+        const res = await db.query("SELECT * FROM users WHERE username = $1", [d.nick]);
+        const user = res.rows[0];
+        if (user && await bcrypt.compare(d.pass, user.password)) {
+            socket.username = d.nick;
+            socket.join(d.nick);
+            socket.emit('auth_ok', { nick: user.username, avatar: user.avatar_url });
+        } else { socket.emit('auth_error', 'Ошибка входа'); }
     });
 
-    // Поиск
     socket.on('search_user', async (name) => {
-        try {
-            const res = await db.query("SELECT username FROM users WHERE username = $1", [name]);
-            if (res.rows[0]) socket.emit('user_found', res.rows[0]);
-            else socket.emit('auth_error', 'Пользователь не найден');
-        } catch (e) {
-            socket.emit('auth_error', 'Ошибка поиска');
-        }
+        const res = await db.query("SELECT username, avatar_url FROM users WHERE username = $1", [name]);
+        if (res.rows[0]) socket.emit('user_found', res.rows[0]);
+        else socket.emit('auth_error', 'Пользователь не найден');
     });
 
-    // Загрузка чата
-    socket.on('load_chat', async (data) => {
-        try {
-            await db.query("UPDATE messages SET is_read = TRUE WHERE sender = $1 AND receiver = $2", [data.him, data.me]);
-            const sql = "SELECT sender, content, is_read, to_char(ts, 'HH24:MI') as time FROM messages WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1) ORDER BY ts ASC";
-            const res = await db.query(sql, [data.me, data.him]);
-            socket.emit('chat_history', res.rows);
-        } catch (e) {
-            console.error(e);
-        }
+    socket.on('load_chat', async (d) => {
+        await db.query("UPDATE messages SET is_read = TRUE WHERE sender = $1 AND receiver = $2", [d.him, d.me]);
+        const res = await db.query(`SELECT sender, content, is_read, to_char(ts, 'HH24:MI') as time 
+            FROM messages WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1) ORDER BY ts ASC`, [d.me, d.him]);
+        socket.emit('chat_history', res.rows);
     });
 
-    // Сообщение
     socket.on('send_msg', async (d) => {
-        try {
-            const sql = "INSERT INTO messages (sender, receiver, content) VALUES ($1, $2, $3) RETURNING to_char(ts, 'HH24:MI') as time";
-            const res = await db.query(sql, [d.from, d.to, d.text]);
-            const time = res.rows[0].time;
-            io.to(d.to).to(d.from).emit('new_msg', { ...d, time, is_read: false });
-        } catch (e) {
-            console.error(e);
-        }
+        const res = await db.query("INSERT INTO messages (sender, receiver, content) VALUES ($1, $2, $3) RETURNING to_char(ts, 'HH24:MI') as time", [d.from, d.to, d.text]);
+        io.to(d.to).to(d.from).emit('new_msg', { ...d, time: res.rows[0].time, is_read: false });
     });
 });
 
-const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => console.log(`Listening on ${PORT}`));
+server.listen(process.env.PORT || 10000);
