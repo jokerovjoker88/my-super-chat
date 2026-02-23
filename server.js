@@ -27,22 +27,23 @@ const transporter = nodemailer.createTransport({
 async function boot() {
     try {
         await db.connect();
-        // Добавлено поле avatar_url
-        await db.query(`CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY, 
-            email TEXT, 
-            password TEXT, 
-            avatar_url TEXT DEFAULT 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
-        )`);
-        await db.query(`CREATE TABLE IF NOT EXISTS messages (
-            id SERIAL PRIMARY KEY, 
-            sender TEXT, 
-            receiver TEXT, 
-            content TEXT, 
-            is_read BOOLEAN DEFAULT FALSE, 
-            ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )`);
-        console.log("=== NEBULA V2 ONLINE ===");
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                username TEXT PRIMARY KEY, 
+                email TEXT, 
+                password TEXT, 
+                avatar TEXT DEFAULT 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
+            );
+            CREATE TABLE IF NOT EXISTS messages (
+                id SERIAL PRIMARY KEY, 
+                sender TEXT, 
+                receiver TEXT, 
+                content TEXT, 
+                is_read BOOLEAN DEFAULT FALSE, 
+                ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log("=== NEBULA V2.0 ONLINE ===");
     } catch (e) { console.error(e); }
 }
 boot();
@@ -53,22 +54,22 @@ io.on('connection', (socket) => {
             const hashed = await bcrypt.hash(d.pass, 10);
             await db.query("INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", [d.nick, d.email, hashed]);
             transporter.sendMail({ from: '"Nebula"', to: d.email, subject: 'Welcome!', text: 'Вы зарегистрированы!' }).catch(() => {});
-            socket.emit('auth_success', 'Успех!');
-        } catch (e) { socket.emit('auth_error', 'Ошибка регистрации'); }
+            socket.emit('auth_success', 'Успешно! Войдите.');
+        } catch (e) { socket.emit('auth_error', 'Ник или Email заняты'); }
     });
 
     socket.on('login', async (d) => {
         const res = await db.query("SELECT * FROM users WHERE username = $1", [d.nick]);
         const user = res.rows[0];
         if (user && await bcrypt.compare(d.pass, user.password)) {
-            socket.username = d.nick;
-            socket.join(d.nick);
-            socket.emit('auth_ok', { nick: user.username, avatar: user.avatar_url });
+            socket.username = user.username;
+            socket.join(user.username);
+            socket.emit('auth_ok', { nick: user.username, avatar: user.avatar });
         } else { socket.emit('auth_error', 'Ошибка входа'); }
     });
 
     socket.on('search_user', async (name) => {
-        const res = await db.query("SELECT username, avatar_url FROM users WHERE username = $1", [name]);
+        const res = await db.query("SELECT username, avatar FROM users WHERE username = $1", [name]);
         if (res.rows[0]) socket.emit('user_found', res.rows[0]);
         else socket.emit('auth_error', 'Пользователь не найден');
     });
