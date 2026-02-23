@@ -3,7 +3,18 @@ let myNick = "";
 let activeChat = null;
 let currentEmail = "";
 
-// Переключение окон
+// Функция показать/скрыть пароль
+function togglePass(id, icon) {
+    const input = document.getElementById(id);
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.replace("fa-eye-slash", "fa-eye");
+    } else {
+        input.type = "password";
+        icon.classList.replace("fa-eye", "fa-eye-slash");
+    }
+}
+
 const showForm = (id) => {
     ['login-form', 'reg-form', 'verify-form'].forEach(f => document.getElementById(f).style.display = f === id ? 'flex' : 'none');
 };
@@ -11,7 +22,6 @@ const showForm = (id) => {
 document.getElementById('go-to-reg').onclick = () => showForm('reg-form');
 document.getElementById('go-to-login').onclick = () => showForm('login-form');
 
-// Регистрация
 document.getElementById('btn-do-reg').onclick = () => {
     const nick = document.getElementById('r-nick').value.trim();
     const email = document.getElementById('r-email').value.trim();
@@ -20,18 +30,12 @@ document.getElementById('btn-do-reg').onclick = () => {
     socket.emit('register', { nick, email, pass });
 };
 
-socket.on('code_sent', () => {
-    alert("Код отправлен на вашу почту!");
-    showForm('verify-form');
-});
+socket.on('code_sent', () => { showForm('verify-form'); });
 
-// Подтверждение
 document.getElementById('btn-verify').onclick = () => {
-    const code = document.getElementById('v-code').value.trim();
-    socket.emit('verify_code', { email: currentEmail, code });
+    socket.emit('verify_code', { email: currentEmail, code: document.getElementById('v-code').value.trim() });
 };
 
-// Вход
 document.getElementById('btn-do-login').onclick = () => {
     socket.emit('login', { nick: document.getElementById('l-nick').value.trim(), pass: document.getElementById('l-pass').value });
 };
@@ -47,7 +51,7 @@ socket.on('auth_ok', d => {
 socket.on('auth_success', m => { alert(m); showForm('login-form'); });
 socket.on('auth_error', m => alert(m));
 
-// Сообщения по Enter
+// Сообщения
 const send = () => {
     const inp = document.getElementById('msg-input');
     if(inp.value.trim() && activeChat) {
@@ -58,7 +62,6 @@ const send = () => {
 document.getElementById('msg-input').onkeydown = (e) => { if(e.key === 'Enter') send(); };
 document.getElementById('send-btn').onclick = send;
 
-// Поиск и Чат
 document.getElementById('search-btn').onclick = () => {
     const t = document.getElementById('user-search').value.trim();
     if(t) socket.emit('search_user', t);
