@@ -19,6 +19,13 @@ function doLogin() {
     socket.emit('login', { nick, pass });
 }
 
+// ФИШКА: Смена аватара
+function changeAvatar() {
+    const url = prompt("Введите прямую ссылку на фото (URL):", "");
+    if(url) socket.emit('update_avatar', url);
+}
+socket.on('avatar_updated', url => { document.getElementById('my-avatar').src = url; });
+
 socket.on('auth_ok', d => {
     me = d.nick;
     document.getElementById('auth-screen').style.display = 'none';
@@ -51,7 +58,20 @@ function openChat(name, avatar) {
     }
 }
 
-// ОТПРАВКА ТЕКСТА
+// ФИШКА: Индикатор печатает
+function handleInput(e) {
+    if(e.key === 'Enter') send();
+    else socket.emit('typing', { from: me, to: target });
+}
+let typingTimer;
+socket.on('user_typing', d => {
+    if(d.from === target) {
+        document.getElementById('typing-status').innerText = "печатает...";
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => { document.getElementById('typing-status').innerText = ""; }, 2000);
+    }
+});
+
 function send() {
     const i = document.getElementById('m-input');
     if(i.value.trim() && target) {
@@ -60,18 +80,13 @@ function send() {
     }
 }
 
-// ОТПРАВКА ФОТО / ФАЙЛОВ
 function uploadFile(el) {
     const file = el.files[0];
     const reader = new FileReader();
-    reader.onload = () => {
-        const type = file.type.startsWith('image') ? 'image' : 'file';
-        socket.emit('send_msg', { from: me, to: target, text: reader.result, type: type });
-    };
+    reader.onload = () => socket.emit('send_msg', { from: me, to: target, text: reader.result, type: file.type.startsWith('image') ? 'image' : 'file' });
     reader.readAsDataURL(file);
 }
 
-// ГОЛОСОВЫЕ
 async function startVoice() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRec = new MediaRecorder(stream);
@@ -87,37 +102,25 @@ async function startVoice() {
     document.getElementById('mic-btn').style.color = 'red';
 }
 
-function stopVoice() {
-    if(mediaRec) mediaRec.stop();
-    document.getElementById('mic-btn').style.color = '#40a7e3';
-}
+function stopVoice() { if(mediaRec) mediaRec.stop(); document.getElementById('mic-btn').style.color = '#40a7e3'; }
 
-socket.on('new_msg', d => {
-    if(d.from === target || d.to === target) renderMsg(d);
-});
-
-socket.on('chat_history', h => {
-    const b = document.getElementById('messages'); b.innerHTML = '';
-    h.forEach(renderMsg);
-});
+socket.on('new_msg', d => { if(d.from === target || d.to === target) renderMsg(d); });
+socket.on('chat_history', h => { document.getElementById('messages').innerHTML = ''; h.forEach(renderMsg); });
 
 function renderMsg(m) {
     const b = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = `msg-bubble ${m.sender === me ? 'me' : 'them'}`;
-    
     let html = '';
-    if(m.type === 'image') html = `<img src="${m.content || m.text}" class="chat-img" onclick="window.open(this.src)">`;
-    else if(m.type === 'audio') html = `<audio src="${m.content || m.text}" controls></audio>`;
-    else if(m.type === 'file') html = `<a href="${m.content || m.text}" download="file" style="color:#fff">📁 Файл</a>`;
-    else html = `<span>${m.content || m.text}</span>`;
-
+    const content = m.content || m.text;
+    if(m.type === 'image') html = `<img src="${content}" class="chat-img" onclick="window.open(this.src)">`;
+    else if(m.type === 'audio') html = `<audio src="${content}" controls></audio>`;
+    else html = `<span>${content}</span>`;
     const tick = m.sender === me ? (m.is_read ? ' <i class="fa-solid fa-check-double" style="color:#40a7e3"></i>' : ' <i class="fa-solid fa-check"></i>') : '';
     d.innerHTML = `${html}<small>${m.time || ''}${tick}</small>`;
-    
     b.appendChild(d);
     b.scrollTop = b.scrollHeight;
 }
 
 socket.on('auth_error', m => alert(m));
-socket.on('auth_success', m => { alert(m); showForm('login-form'); });ы
+socket.on('auth_success', m => { alert(m); showForm('login-form'); });
