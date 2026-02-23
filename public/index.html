@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula V2</title>
+    <title>Nebula Chat</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -29,7 +29,7 @@
     <div id="main-app" class="app" style="display:none">
         <aside class="sidebar">
             <div class="side-header">
-                <img id="my-avatar" src="" class="avatar-min">
+                <img id="my-avatar" src="" class="avatar">
                 <b id="my-name"></b>
             </div>
             <div class="search-box">
@@ -43,12 +43,12 @@
             <div id="no-chat" class="centered">Выберите, кому написать</div>
             <div id="chat-win" style="display:none; flex:1; flex-direction:column;">
                 <header class="chat-header">
-                    <img id="chat-avatar" src="" class="avatar-min">
+                    <img id="chat-avatar" src="" class="avatar">
                     <span id="chat-with"></span>
                 </header>
                 <div id="messages" class="messages"></div>
                 <div class="input-area">
-                    <input type="text" id="m-input" placeholder="Напишите сообщение..." onkeypress="handleEnter(event)">
+                    <input type="text" id="m-input" placeholder="Напишите сообщение..." onkeydown="if(event.key==='Enter') send()">
                     <button onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
