@@ -2,41 +2,59 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <title>Nebula Secure</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div id="auth-screen" class="auth-overlay">
         <div id="login-form" class="auth-card">
-            <i class="fa-solid fa-user-shield" style="font-size:3rem;color:#40a7e3"></i>
-            <input type="text" id="l-nick" placeholder="Ник"><input type="password" id="l-pass" placeholder="Пароль">
+            <i class="fa-solid fa-user-shield"></i>
+            <h1>NEBULA</h1>
+            <input type="text" id="l-nick" placeholder="Никнейм">
+            <input type="password" id="l-pass" placeholder="Пароль">
             <button onclick="doLogin()">Войти</button>
-            <p onclick="document.getElementById('login-form').style.display='none';document.getElementById('reg-form').style.display='flex'">Регистрация</p>
+            <p onclick="toggleAuth(true)">Создать аккаунт</p>
         </div>
         <div id="reg-form" class="auth-card" style="display:none">
-            <input type="text" id="r-nick" placeholder="Ник"><input type="email" id="r-email" placeholder="Email"><input type="password" id="r-pass" placeholder="Пароль">
-            <button onclick="doReg()">Создать</button>
+            <h1>РЕГИСТРАЦИЯ</h1>
+            <input type="text" id="r-nick" placeholder="Ник">
+            <input type="email" id="r-email" placeholder="Email">
+            <input type="password" id="r-pass" placeholder="Пароль">
+            <button onclick="doReg()">Зарегистрироваться</button>
+            <p onclick="toggleAuth(false)">Назад</p>
         </div>
     </div>
+
     <div id="main-app" class="app" style="display:none">
         <aside class="sidebar">
-            <div class="side-header"><img id="my-avatar" class="avatar-clickable" onclick="changeAvatar()"><span id="my-name"></span></div>
-            <div class="search-box"><input type="text" id="u-search"><button onclick="socket.emit('search_user', document.getElementById('u-search').value)"><i class="fa-solid fa-plus"></i></button></div>
+            <div class="side-header">
+                <img id="my-avatar" class="avatar-clickable" onclick="changeAvatar()">
+                <span id="my-name"></span>
+            </div>
+            <div class="search-box">
+                <input type="text" id="u-search" placeholder="Поиск ника...">
+                <button onclick="search()"><i class="fa-solid fa-plus"></i></button>
+            </div>
             <div id="contacts"></div>
         </aside>
         <main class="chat-area">
-            <div id="chat-win" style="display:none;flex:1;flex-direction:column">
-                <header class="chat-header"><img id="chat-avatar" class="avatar-min"><b id="chat-with"></b></header>
-                <div id="messages" class="messages-container"></div>
+            <div id="no-chat" class="empty-view">Выберите чат</div>
+            <div id="chat-win" style="display:none; flex:1; flex-direction:column;">
+                <header class="chat-header">
+                    <img id="chat-avatar" class="avatar-min">
+                    <b id="chat-with"></b>
+                </header>
+                <div id="messages"></div>
                 <div class="input-row">
-                    <label><i class="fa-solid fa-paperclip"></i><input type="file" hidden onchange="uploadMedia(this)"></label>
-                    <input type="text" id="m-input" onkeydown="if(event.key==='Enter') send()">
-                    <button id="mic-btn" onmousedown="startVoice()" onmouseup="stopVoice()"><i class="fa-solid fa-microphone"></i></button>
-                    <button onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
+                    <label class="btn-icon"><i class="fa-solid fa-paperclip"></i><input type="file" hidden onchange="upload(this)"></label>
+                    <input type="text" id="m-input" placeholder="Сообщение..." onkeydown="if(event.key==='Enter') send()">
+                    <button class="btn-icon" onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
         </main>
     </div>
-    <script src="/socket.io/socket.io.js"></script><script src="script.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
