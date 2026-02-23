@@ -2,7 +2,6 @@ const socket = io();
 let me = "", target = "";
 
 function toggleAuth(reg) {
-    document.getElementById('login-form').style.display = reg ? 'none' : 'flex';
     document.getElementById('reg-form').style.display = reg ? 'flex' : 'none';
 }
 
@@ -29,10 +28,7 @@ socket.on('auth_ok', d => {
 
 function search() {
     const val = document.getElementById('u-search').value;
-    if(val) {
-        socket.emit('search_user', val);
-        document.getElementById('u-search').value = '';
-    }
+    if(val) socket.emit('search_user', val);
 }
 
 socket.on('user_found', u => openChat(u.username, u.avatar));
@@ -65,15 +61,6 @@ function send() {
     }
 }
 
-function upload(el) {
-    const file = el.files[0];
-    if(file) {
-        const reader = new FileReader();
-        reader.onload = () => socket.emit('send_msg', { from: me, to: target, content: reader.result, type: 'image' });
-        reader.readAsDataURL(file);
-    }
-}
-
 socket.on('new_msg', d => {
     if(d.from === target || d.to === target) renderMsg(d);
 });
@@ -89,19 +76,16 @@ function renderMsg(m) {
     const div = document.createElement('div');
     const isMe = (m.from === me || m.sender === me);
     div.className = `msg-bubble ${isMe ? 'me' : 'them'}`;
-    
-    let html = m.type === 'image' ? `<img src="${m.content}" class="chat-img">` : `<span>${m.content}</span>`;
-    div.innerHTML = `${html}<small>${m.time || ''}</small>`;
-    
+    div.innerHTML = `<span>${m.content}</span><small>${m.time || ''}</small>`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
 }
 
 function changeAvatar() {
-    const url = prompt("Прямая ссылка на фото:");
+    const url = prompt("Ссылка на фото:");
     if(url) socket.emit('update_avatar', url);
 }
 
 socket.on('avatar_updated', url => { document.getElementById('my-avatar').src = url; });
 socket.on('auth_error', m => alert(m));
-socket.on('auth_success', () => { alert("Успешно! Войдите."); toggleAuth(false); });
+socket.on('auth_success', () => { alert("Регистрация успешна!"); toggleAuth(false); });
