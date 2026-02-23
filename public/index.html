@@ -12,23 +12,16 @@
         <div id="login-form" class="auth-card">
             <div class="logo"><i class="fa-solid fa-user-shield"></i><h1>NEBULA</h1></div>
             <input type="text" id="l-nick" placeholder="Никнейм">
-            <div class="pass-wrapper">
-                <input type="password" id="l-pass" placeholder="Пароль">
-                <i class="fa-solid fa-eye-slash" onclick="togglePass('l-pass', this)"></i>
-            </div>
+            <input type="password" id="l-pass" placeholder="Пароль">
             <button onclick="doLogin()">Войти</button>
             <p>Нет аккаунта? <a href="#" onclick="showForm('reg-form')">Регистрация</a></p>
         </div>
-
         <div id="reg-form" class="auth-card" style="display: none;">
             <div class="logo"><i class="fa-solid fa-shield-halved"></i><h1>JOIN</h1></div>
-            <input type="text" id="r-nick" placeholder="Придумайте ник">
-            <input type="email" id="r-email" placeholder="Ваша почта">
-            <div class="pass-wrapper">
-                <input type="password" id="r-pass" placeholder="Пароль">
-                <i class="fa-solid fa-eye-slash" onclick="togglePass('r-pass', this)"></i>
-            </div>
-            <button onclick="doReg()">Зарегистрироваться</button>
+            <input type="text" id="r-nick" placeholder="Ник">
+            <input type="email" id="r-email" placeholder="Email">
+            <input type="password" id="r-pass" placeholder="Пароль">
+            <button onclick="doReg()">Создать аккаунт</button>
             <p><a href="#" onclick="showForm('login-form')">Назад</a></p>
         </div>
     </div>
@@ -47,10 +40,7 @@
         </aside>
 
         <main class="chat-area">
-            <div id="no-chat" class="empty-view">
-                <i class="fa-solid fa-comments"></i>
-                <p>Выберите чат или найдите друга</p>
-            </div>
+            <div id="no-chat" class="empty-view"><i class="fa-solid fa-comments"></i><p>Выберите чат</p></div>
             <div id="chat-win" style="display:none; flex:1; flex-direction:column;">
                 <header class="chat-header">
                     <img id="chat-avatar" src="" class="avatar-min">
@@ -58,7 +48,12 @@
                 </header>
                 <div id="messages" class="messages-container"></div>
                 <div class="input-row">
-                    <input type="text" id="m-input" placeholder="Напишите сообщение..." onkeydown="if(event.key==='Enter') send()">
+                    <label class="file-label">
+                        <i class="fa-solid fa-paperclip"></i>
+                        <input type="file" id="f-input" hidden onchange="uploadFile(this)">
+                    </label>
+                    <input type="text" id="m-input" placeholder="Сообщение..." onkeydown="if(event.key==='Enter') send()">
+                    <button id="mic-btn" onmousedown="startVoice()" onmouseup="stopVoice()"><i class="fa-solid fa-microphone"></i></button>
                     <button onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
