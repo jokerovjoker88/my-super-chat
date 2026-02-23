@@ -10,7 +10,7 @@ function doReg() {
     const nick = document.getElementById('r-nick').value.trim();
     const email = document.getElementById('r-email').value.trim();
     const pass = document.getElementById('r-pass').value;
-    if(nick && email && pass) socket.emit('register', { nick, email, pass });
+    if(nick && pass) socket.emit('register', { nick, email, pass });
 }
 
 function doLogin() {
@@ -20,11 +20,9 @@ function doLogin() {
 }
 
 function changeAvatar() {
-    const url = prompt("Введите прямую ссылку на фото:");
+    const url = prompt("Вставьте ссылку на картинку:");
     if(url) socket.emit('update_avatar', url);
 }
-
-socket.on('avatar_updated', url => { document.getElementById('my-avatar').src = url; });
 
 socket.on('auth_ok', d => {
     me = d.nick;
@@ -33,6 +31,8 @@ socket.on('auth_ok', d => {
     document.getElementById('my-name').innerText = me;
     document.getElementById('my-avatar').src = d.avatar;
 });
+
+socket.on('avatar_updated', url => { document.getElementById('my-avatar').src = url; });
 
 function search() {
     const n = document.getElementById('u-search').value.trim();
@@ -48,7 +48,6 @@ function openChat(name, avatar) {
     document.getElementById('chat-with').innerText = name;
     document.getElementById('chat-avatar').src = avatar;
     socket.emit('load_chat', { me, him: name });
-
     if(!document.getElementById('c-'+name)) {
         const d = document.createElement('div');
         d.id = 'c-'+name; d.className = 'contact-item';
@@ -68,32 +67,24 @@ function send() {
 
 function uploadMedia(el) {
     const file = el.files[0];
-    if(!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-        const type = file.type.startsWith('image') ? 'image' : 'file';
-        socket.emit('send_msg', { from: me, to: target, content: reader.result, type: type });
-    };
+    reader.onload = () => socket.emit('send_msg', { from: me, to: target, content: reader.result, type: file.type.startsWith('image')?'image':'file' });
     reader.readAsDataURL(file);
 }
 
 async function startVoice() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRec = new MediaRecorder(stream);
-        chunks = [];
-        mediaRec.ondataavailable = e => chunks.push(e.data);
-        mediaRec.onstop = () => {
-            const blob = new Blob(chunks, { type: 'audio/ogg' });
-            const r = new FileReader();
-            r.onload = () => socket.emit('send_msg', { from: me, to: target, content: r.result, type: 'audio' });
-            r.readAsDataURL(blob);
-        };
-        mediaRec.start();
-        document.getElementById('mic-btn').style.color = 'red';
-    } catch(e) { alert("Доступ к микрофону запрещен"); }
+    const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRec = new MediaRecorder(s); chunks = [];
+    mediaRec.ondataavailable = e => chunks.push(e.data);
+    mediaRec.onstop = () => {
+        const b = new Blob(chunks, { type: 'audio/ogg' });
+        const r = new FileReader();
+        r.onload = () => socket.emit('send_msg', { from: me, to: target, content: r.result, type: 'audio' });
+        r.readAsDataURL(b);
+    };
+    mediaRec.start();
+    document.getElementById('mic-btn').style.color = 'red';
 }
-
 function stopVoice() { if(mediaRec) mediaRec.stop(); document.getElementById('mic-btn').style.color = '#40a7e3'; }
 
 socket.on('new_msg', d => { if(d.from === target || d.to === target) renderMsg(d); });
@@ -103,16 +94,10 @@ function renderMsg(m) {
     const b = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = `msg-bubble ${m.sender === me ? 'me' : 'them'}`;
-    let body = '';
-    const content = m.content || m.text;
-    if(m.type === 'image') body = `<img src="${content}" class="chat-img" onclick="window.open(this.src)">`;
-    else if(m.type === 'audio') body = `<audio src="${content}" controls></audio>`;
-    else body = `<span>${content}</span>`;
-    const tick = m.sender === me ? (m.is_read ? ' <i class="fa-solid fa-check-double" style="color:#40a7e3"></i>' : ' <i class="fa-solid fa-check"></i>') : '';
-    d.innerHTML = `${body}<small>${m.time || ''}${tick}</small>`;
-    b.appendChild(d);
-    b.scrollTop = b.scrollHeight;
+    let c = m.content || m.text;
+    let html = m.type==='image'?`<img src="${c}" class="chat-img">`: (m.type==='audio'?`<audio src="${c}" controls></audio>`:`<span>${c}</span>`);
+    d.innerHTML = `${html}<small>${m.time || ''}</small>`;
+    b.appendChild(d); b.scrollTop = b.scrollHeight;
 }
-
 socket.on('auth_error', m => alert(m));
 socket.on('auth_success', m => { alert(m); showForm('login-form'); });
