@@ -1,39 +1,43 @@
-/* Обои чата */
-.chat-bg {
+:root { --bg: #0e1621; --side: #17212b; --acc: #2b5278; --text: #fff; --accent-blue: #40a7e3; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
+
+/* ОБОИ */
+.pattern-bg {
     background-color: #0b141a;
     background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+    background-size: 380px;
     background-blend-mode: overlay;
-    background-size: 400px;
-    opacity: 0.9;
 }
 
-/* Лупа в поиске */
-.search-box {
-    position: relative;
-    padding: 10px;
-    display: flex;
-    align-items: center;
-    background: #1c2733;
-}
-.search-icon {
-    position: absolute;
-    left: 20px;
-    color: #84919a;
-    font-size: 0.9rem;
-}
-.search-box input {
-    padding-left: 35px !important; /* Отступ под лупу */
-    width: 100%;
-    background: #242f3d;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    padding: 8px;
-}
+/* ЛУПА */
+.search-box { position: relative; padding: 10px; display: flex; align-items: center; background: #1c2733; }
+.search-icon { position: absolute; left: 22px; color: #84919a; font-size: 0.9rem; pointer-events: none; }
+.search-box input { padding-left: 35px !important; width: 100%; background: #242f3d; border: none; color: white; padding: 10px; border-radius: 8px; outline: none; }
+#search-btn { background: none; border: none; color: var(--accent-blue); font-size: 1.2rem; cursor: pointer; margin-left: 5px; }
 
-/* Пузырьки сообщений (для лучшей читаемости на фоне) */
-.bubble {
-    box-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
+/* КАРТОЧКИ */
+.auth-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.auth-card { background: var(--side); padding: 40px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; width: 320px; text-align: center; }
+.auth-card input { padding: 12px; border-radius: 10px; border: 1px solid #333; background: #242f3d; color: #fff; outline: none; }
+.auth-card button { padding: 12px; border-radius: 10px; border: none; background: var(--accent-blue); color: white; cursor: pointer; font-weight: bold; }
+.logo i { font-size: 3rem; color: var(--accent-blue); margin-bottom: 10px; }
 
-/* Остальные стили из прошлого ответа... */
+/* ПРИЛОЖЕНИЕ */
+.app { display: flex; height: 100vh; }
+.sidebar { width: 300px; background: var(--side); display: flex; flex-direction: column; border-right: 1px solid #000; }
+.my-header { padding: 20px; background: #242f3d; }
+.dialogs { flex: 1; overflow-y: auto; }
+.dialog-item { padding: 15px; cursor: pointer; border-bottom: 1px solid #0e1621; }
+.dialog-item:hover { background: var(--acc); }
+
+.chat-view { flex: 1; display: flex; flex-direction: column; }
+.chat-header { padding: 15px 25px; background: var(--side); font-weight: bold; }
+.messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.msg-row.me { justify-content: flex-end; display: flex; }
+.bubble { max-width: 70%; padding: 10px 15px; border-radius: 15px; background: #182533; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+.me .bubble { background: var(--acc); }
+.msg-meta { display: flex; justify-content: flex-end; gap: 5px; font-size: 0.65rem; opacity: 0.6; margin-top: 5px; }
+.status-tick { color: var(--accent-blue); }
+
+.input-bar { padding: 15px; background: var(--side); display: flex; gap: 15px; align-items: center; }
+.input-bar input { flex: 1; background: none; border: none; color: #fff; outline: none; }
