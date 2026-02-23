@@ -1,13 +1,14 @@
 {
-  "name": "nebula-chat-instant",
-  "version": "1.6.0",
+  "name": "nebula-chat",
+  "version": "1.0.0",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.7.2",
     "pg": "^8.11.3",
-    "bcryptjs": "^2.4.3",
-    "nodemailer": "^6.9.7"
+    "bcryptjs": "^2.4.3"
+  },
+  "scripts": {
+    "start": "node server.js"
   }
 }
