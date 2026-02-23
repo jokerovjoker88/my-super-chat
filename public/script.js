@@ -10,18 +10,18 @@ function doReg() {
     const nick = document.getElementById('r-nick').value.trim();
     const email = document.getElementById('r-email').value.trim();
     const pass = document.getElementById('r-pass').value;
-    socket.emit('register', { nick, email, pass });
+    if(nick && email && pass) socket.emit('register', { nick, email, pass });
 }
 
 function doLogin() {
     const nick = document.getElementById('l-nick').value.trim();
     const pass = document.getElementById('l-pass').value;
-    socket.emit('login', { nick, pass });
+    if(nick && pass) socket.emit('login', { nick, pass });
 }
 
-// ФИШКА: Смена аватара
+// ФИШКА: СМЕНА АВАТАРА
 function changeAvatar() {
-    const url = prompt("Введите прямую ссылку на фото (URL):", "");
+    const url = prompt("Введите прямую ссылку на новое фото профиля:");
     if(url) socket.emit('update_avatar', url);
 }
 socket.on('avatar_updated', url => { document.getElementById('my-avatar').src = url; });
@@ -58,48 +58,43 @@ function openChat(name, avatar) {
     }
 }
 
-// ФИШКА: Индикатор печатает
-function handleInput(e) {
-    if(e.key === 'Enter') send();
-    else socket.emit('typing', { from: me, to: target });
-}
-let typingTimer;
-socket.on('user_typing', d => {
-    if(d.from === target) {
-        document.getElementById('typing-status').innerText = "печатает...";
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => { document.getElementById('typing-status').innerText = ""; }, 2000);
-    }
-});
-
+// ОТПРАВКА СМС (ТЕКСТ)
 function send() {
     const i = document.getElementById('m-input');
     if(i.value.trim() && target) {
-        socket.emit('send_msg', { from: me, to: target, text: i.value, type: 'text' });
+        socket.emit('send_msg', { from: me, to: target, content: i.value, type: 'text' });
         i.value = '';
     }
 }
 
-function uploadFile(el) {
+// ОТПРАВКА ФОТО/ФАЙЛОВ
+function uploadMedia(el) {
     const file = el.files[0];
+    if(!file) return;
     const reader = new FileReader();
-    reader.onload = () => socket.emit('send_msg', { from: me, to: target, text: reader.result, type: file.type.startsWith('image') ? 'image' : 'file' });
+    reader.onload = () => {
+        const type = file.type.startsWith('image') ? 'image' : 'file';
+        socket.emit('send_msg', { from: me, to: target, content: reader.result, type: type });
+    };
     reader.readAsDataURL(file);
 }
 
+// ГОЛОСОВЫЕ
 async function startVoice() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRec = new MediaRecorder(stream);
-    chunks = [];
-    mediaRec.ondataavailable = e => chunks.push(e.data);
-    mediaRec.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/ogg' });
-        const r = new FileReader();
-        r.onload = () => socket.emit('send_msg', { from: me, to: target, text: r.result, type: 'audio' });
-        r.readAsDataURL(blob);
-    };
-    mediaRec.start();
-    document.getElementById('mic-btn').style.color = 'red';
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRec = new MediaRecorder(stream);
+        chunks = [];
+        mediaRec.ondataavailable = e => chunks.push(e.data);
+        mediaRec.onstop = () => {
+            const blob = new Blob(chunks, { type: 'audio/ogg' });
+            const r = new FileReader();
+            r.onload = () => socket.emit('send_msg', { from: me, to: target, content: r.result, type: 'audio' });
+            r.readAsDataURL(blob);
+        };
+        mediaRec.start();
+        document.getElementById('mic-btn').style.color = 'red';
+    } catch(e) { alert("Микрофон не доступен"); }
 }
 
 function stopVoice() { if(mediaRec) mediaRec.stop(); document.getElementById('mic-btn').style.color = '#40a7e3'; }
@@ -111,13 +106,16 @@ function renderMsg(m) {
     const b = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = `msg-bubble ${m.sender === me ? 'me' : 'them'}`;
-    let html = '';
-    const content = m.content || m.text;
-    if(m.type === 'image') html = `<img src="${content}" class="chat-img" onclick="window.open(this.src)">`;
-    else if(m.type === 'audio') html = `<audio src="${content}" controls></audio>`;
-    else html = `<span>${content}</span>`;
+    
+    let body = '';
+    const text = m.content || m.text; // Защита от undefined
+    if(m.type === 'image') body = `<img src="${text}" class="chat-img" onclick="window.open(this.src)">`;
+    else if(m.type === 'audio') body = `<audio src="${text}" controls></audio>`;
+    else if(m.type === 'file') body = `<a href="${text}" download="file" style="color:white">📁 Файл</a>`;
+    else body = `<span>${text}</span>`;
+
     const tick = m.sender === me ? (m.is_read ? ' <i class="fa-solid fa-check-double" style="color:#40a7e3"></i>' : ' <i class="fa-solid fa-check"></i>') : '';
-    d.innerHTML = `${html}<small>${m.time || ''}${tick}</small>`;
+    d.innerHTML = `${body}<small>${m.time || ''}${tick}</small>`;
     b.appendChild(d);
     b.scrollTop = b.scrollHeight;
 }
