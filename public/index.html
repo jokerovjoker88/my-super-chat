@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula V4</title>
+    <title>Nebula Secure Chat</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -18,10 +18,10 @@
         </div>
         <div id="reg-form" class="auth-card" style="display: none;">
             <div class="logo"><i class="fa-solid fa-shield-halved"></i><h1>JOIN</h1></div>
-            <input type="text" id="r-nick" placeholder="Ник">
+            <input type="text" id="r-nick" placeholder="Ваш ник">
             <input type="email" id="r-email" placeholder="Email">
             <input type="password" id="r-pass" placeholder="Пароль">
-            <button onclick="doReg()">Создать</button>
+            <button onclick="doReg()">Создать аккаунт</button>
             <p><a href="#" onclick="showForm('login-form')">Назад</a></p>
         </div>
     </div>
@@ -29,30 +29,33 @@
     <div id="main-app" class="app" style="display: none;">
         <aside class="sidebar">
             <div class="side-header">
-                <img id="my-avatar" src="" class="avatar-clickable" onclick="changeAvatar()" title="Сменить фото">
+                <img id="my-avatar" src="" class="avatar-clickable" onclick="changeAvatar()" title="Сменить аватар">
                 <span id="my-name"></span>
             </div>
             <div class="search-box">
-                <input type="text" id="u-search" placeholder="Поиск друга...">
+                <input type="text" id="u-search" placeholder="Поиск ника...">
                 <button onclick="search()"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="contacts" class="contacts"></div>
         </aside>
 
         <main class="chat-area">
-            <div id="no-chat" class="empty-view"><i class="fa-solid fa-comments"></i><p>Nebula Secure Chat</p></div>
+            <div id="no-chat" class="empty-view">
+                <i class="fa-solid fa-comments"></i>
+                <p>Выберите чат или найдите друга по нику</p>
+            </div>
             <div id="chat-win" style="display:none; flex:1; flex-direction:column;">
                 <header class="chat-header">
                     <img id="chat-avatar" src="" class="avatar-min">
-                    <div class="chat-info">
-                        <b id="chat-with"></b>
-                        <small id="typing-status"></small>
-                    </div>
+                    <b id="chat-with"></b>
                 </header>
                 <div id="messages" class="messages-container"></div>
                 <div class="input-row">
-                    <label class="file-label"><i class="fa-solid fa-paperclip"></i><input type="file" hidden onchange="uploadFile(this)"></label>
-                    <input type="text" id="m-input" placeholder="Сообщение..." onkeydown="handleInput(event)">
+                    <label class="file-label">
+                        <i class="fa-solid fa-paperclip"></i>
+                        <input type="file" hidden id="f-upload" onchange="uploadMedia(this)">
+                    </label>
+                    <input type="text" id="m-input" placeholder="Напишите сообщение..." onkeydown="if(event.key==='Enter') send()">
                     <button id="mic-btn" onmousedown="startVoice()" onmouseup="stopVoice()"><i class="fa-solid fa-microphone"></i></button>
                     <button onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
