@@ -19,11 +19,11 @@ function doLogin() {
     if(nick && pass) socket.emit('login', { nick, pass });
 }
 
-// ФИШКА: СМЕНА АВАТАРА
 function changeAvatar() {
-    const url = prompt("Введите прямую ссылку на новое фото профиля:");
+    const url = prompt("Введите прямую ссылку на фото:");
     if(url) socket.emit('update_avatar', url);
 }
+
 socket.on('avatar_updated', url => { document.getElementById('my-avatar').src = url; });
 
 socket.on('auth_ok', d => {
@@ -58,7 +58,6 @@ function openChat(name, avatar) {
     }
 }
 
-// ОТПРАВКА СМС (ТЕКСТ)
 function send() {
     const i = document.getElementById('m-input');
     if(i.value.trim() && target) {
@@ -67,7 +66,6 @@ function send() {
     }
 }
 
-// ОТПРАВКА ФОТО/ФАЙЛОВ
 function uploadMedia(el) {
     const file = el.files[0];
     if(!file) return;
@@ -79,7 +77,6 @@ function uploadMedia(el) {
     reader.readAsDataURL(file);
 }
 
-// ГОЛОСОВЫЕ
 async function startVoice() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -94,7 +91,7 @@ async function startVoice() {
         };
         mediaRec.start();
         document.getElementById('mic-btn').style.color = 'red';
-    } catch(e) { alert("Микрофон не доступен"); }
+    } catch(e) { alert("Доступ к микрофону запрещен"); }
 }
 
 function stopVoice() { if(mediaRec) mediaRec.stop(); document.getElementById('mic-btn').style.color = '#40a7e3'; }
@@ -106,14 +103,11 @@ function renderMsg(m) {
     const b = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = `msg-bubble ${m.sender === me ? 'me' : 'them'}`;
-    
     let body = '';
-    const text = m.content || m.text; // Защита от undefined
-    if(m.type === 'image') body = `<img src="${text}" class="chat-img" onclick="window.open(this.src)">`;
-    else if(m.type === 'audio') body = `<audio src="${text}" controls></audio>`;
-    else if(m.type === 'file') body = `<a href="${text}" download="file" style="color:white">📁 Файл</a>`;
-    else body = `<span>${text}</span>`;
-
+    const content = m.content || m.text;
+    if(m.type === 'image') body = `<img src="${content}" class="chat-img" onclick="window.open(this.src)">`;
+    else if(m.type === 'audio') body = `<audio src="${content}" controls></audio>`;
+    else body = `<span>${content}</span>`;
     const tick = m.sender === me ? (m.is_read ? ' <i class="fa-solid fa-check-double" style="color:#40a7e3"></i>' : ' <i class="fa-solid fa-check"></i>') : '';
     d.innerHTML = `${body}<small>${m.time || ''}${tick}</small>`;
     b.appendChild(d);
