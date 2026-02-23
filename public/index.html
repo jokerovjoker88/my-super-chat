@@ -3,51 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula Chat</title>
+    <title>Nebula Secure</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div id="auth-screen" class="auth-overlay">
         <div id="login-form" class="auth-card">
-            <h1>NEBULA</h1>
-            <input type="text" id="l-nick" placeholder="Ник">
-            <input type="password" id="l-pass" placeholder="Пароль">
+            <div class="logo"><i class="fa-solid fa-user-shield"></i><h1>NEBULA</h1></div>
+            <input type="text" id="l-nick" placeholder="Никнейм">
+            <div class="pass-wrapper">
+                <input type="password" id="l-pass" placeholder="Пароль">
+                <i class="fa-solid fa-eye-slash" onclick="togglePass('l-pass', this)"></i>
+            </div>
             <button onclick="doLogin()">Войти</button>
-            <p onclick="showForm('reg-form')">Регистрация</p>
+            <p>Нет аккаунта? <a href="#" onclick="showForm('reg-form')">Регистрация</a></p>
         </div>
-        <div id="reg-form" class="auth-card" style="display:none">
-            <h1>JOIN</h1>
-            <input type="text" id="r-nick" placeholder="Ник">
-            <input type="email" id="r-email" placeholder="Email">
-            <input type="password" id="r-pass" placeholder="Пароль">
-            <button onclick="doReg()">Создать аккаунт</button>
-            <p onclick="showForm('login-form')">Назад</p>
+
+        <div id="reg-form" class="auth-card" style="display: none;">
+            <div class="logo"><i class="fa-solid fa-shield-halved"></i><h1>JOIN</h1></div>
+            <input type="text" id="r-nick" placeholder="Придумайте ник">
+            <input type="email" id="r-email" placeholder="Ваша почта">
+            <div class="pass-wrapper">
+                <input type="password" id="r-pass" placeholder="Пароль">
+                <i class="fa-solid fa-eye-slash" onclick="togglePass('r-pass', this)"></i>
+            </div>
+            <button onclick="doReg()">Зарегистрироваться</button>
+            <p><a href="#" onclick="showForm('login-form')">Назад</a></p>
         </div>
     </div>
 
-    <div id="main-app" class="app" style="display:none">
+    <div id="main-app" class="app" style="display: none;">
         <aside class="sidebar">
             <div class="side-header">
-                <img id="my-avatar" src="" class="avatar">
-                <b id="my-name"></b>
+                <img id="my-avatar" src="" class="avatar-min">
+                <span id="my-name"></span>
             </div>
             <div class="search-box">
                 <input type="text" id="u-search" placeholder="Поиск ника...">
-                <button onclick="search()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                <button onclick="search()"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="contacts" class="contacts"></div>
         </aside>
-        
-        <main class="chat">
-            <div id="no-chat" class="centered">Выберите, кому написать</div>
+
+        <main class="chat-area">
+            <div id="no-chat" class="empty-view">
+                <i class="fa-solid fa-comments"></i>
+                <p>Выберите чат или найдите друга</p>
+            </div>
             <div id="chat-win" style="display:none; flex:1; flex-direction:column;">
                 <header class="chat-header">
-                    <img id="chat-avatar" src="" class="avatar">
-                    <span id="chat-with"></span>
+                    <img id="chat-avatar" src="" class="avatar-min">
+                    <b id="chat-with"></b>
                 </header>
-                <div id="messages" class="messages"></div>
-                <div class="input-area">
+                <div id="messages" class="messages-container"></div>
+                <div class="input-row">
                     <input type="text" id="m-input" placeholder="Напишите сообщение..." onkeydown="if(event.key==='Enter') send()">
                     <button onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
