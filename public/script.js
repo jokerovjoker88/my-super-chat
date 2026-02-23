@@ -1,5 +1,5 @@
 const socket = io();
-let me = "", target = "";
+let me = "", myAvatar = "", target = "";
 
 function showForm(id) {
     document.getElementById('login-form').style.display = id==='login-form'?'flex':'none';
@@ -20,37 +20,46 @@ function doLogin() {
 }
 
 socket.on('auth_ok', d => {
-    me = d.nick;
+    me = d.nick; myAvatar = d.avatar;
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'flex';
     document.getElementById('my-name').innerText = me;
+    document.getElementById('my-avatar').src = myAvatar;
 });
 
+// ПОИСК
 function search() {
     const n = document.getElementById('u-search').value.trim();
     if(n) socket.emit('search_user', n);
 }
 
-socket.on('user_found', u => openChat(u.username));
+socket.on('user_found', u => openChat(u.username, u.avatar_url));
 
-function openChat(name) {
+function openChat(name, avatar) {
     target = name;
     document.getElementById('no-chat').style.display = 'none';
     document.getElementById('chat-win').style.display = 'flex';
     document.getElementById('chat-with').innerText = name;
+    document.getElementById('chat-avatar').src = avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
     socket.emit('load_chat', { me, him: name });
 
     if(!document.getElementById('c-'+name)) {
         const d = document.createElement('div');
-        d.id = 'c-'+name; d.className = 'contact'; d.innerText = name;
-        d.onclick = () => openChat(name);
+        d.id = 'c-'+name; d.className = 'contact';
+        d.innerHTML = `<img src="${avatar}" class="avatar-min"> <span>${name}</span>`;
+        d.onclick = () => openChat(name, avatar);
         document.getElementById('contacts').appendChild(d);
     }
 }
 
+// ОТПРАВКА ПО ENTER
+function handleEnter(e) {
+    if(e.key === 'Enter') send();
+}
+
 function send() {
     const i = document.getElementById('m-input');
-    if(i.value.trim()) {
+    if(i.value.trim() && target) {
         socket.emit('send_msg', { from: me, to: target, text: i.value });
         i.value = '';
     }
@@ -69,9 +78,15 @@ function renderMsg(m) {
     const b = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = `bubble ${m.sender === me ? 'me' : 'them'}`;
-    // Галочки для статуса прочитано
-    const status = m.sender === me ? (m.is_read ? ' <i class="fa-solid fa-check-double"></i>' : ' <i class="fa-solid fa-check"></i>') : '';
-    d.innerHTML = `<span>${m.content}</span><small>${m.time}${status}</small>`;
+    
+    // ГАЛОЧКИ: Одна (чек) - отправлено, Две (чек-дабл) - прочитано
+    let ticks = '';
+    if(m.sender === me) {
+        ticks = m.is_read ? '<i class="fa-solid fa-check-double status-tick"></i>' : '<i class="fa-solid fa-check status-tick"></i>';
+    }
+
+    d.innerHTML = `<div class="msg-text">${m.content}</div>
+                   <div class="msg-info">${m.time} ${ticks}</div>`;
     b.appendChild(d);
     b.scrollTop = b.scrollHeight;
 }
