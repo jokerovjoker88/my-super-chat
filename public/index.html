@@ -2,48 +2,56 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula Secure</title>
+    <title>Nebula Chat</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div id="auth-screen" class="auth-overlay">
-        <div id="login-form" class="auth-card">
+        <div class="auth-card">
+            <i class="fa-solid fa-paper-plane" style="font-size:3.5rem; color:#40a7e3; margin-bottom:10px;"></i>
             <h1>NEBULA</h1>
-            <input type="text" id="l-nick" placeholder="Ник">
+            <input type="text" id="l-nick" placeholder="Никнейм">
             <input type="password" id="l-pass" placeholder="Пароль">
             <button onclick="doLogin()">Войти</button>
-            <p onclick="showForm('reg-form')">Регистрация</p>
+            <p onclick="toggleAuth(true)" style="cursor:pointer; color:#40a7e3; margin-top:15px;">Создать аккаунт</p>
         </div>
-        <div id="reg-form" class="auth-card" style="display:none">
-            <h1>JOIN</h1>
-            <input type="text" id="r-nick" placeholder="Ник">
-            <input type="email" id="r-email" placeholder="Email">
-            <input type="password" id="r-pass" placeholder="Пароль">
-            <button onclick="doReg()">Создать аккаунт</button>
-            <p onclick="showForm('login-form')">Назад</p>
+        <div id="reg-form" class="auth-overlay" style="display:none; z-index:1001;">
+            <div class="auth-card">
+                <h1>РЕГИСТРАЦИЯ</h1>
+                <input type="text" id="r-nick" placeholder="Ник">
+                <input type="email" id="r-email" placeholder="Email">
+                <input type="password" id="r-pass" placeholder="Пароль">
+                <button onclick="doReg()">Зарегистрироваться</button>
+                <p onclick="toggleAuth(false)" style="cursor:pointer; color:#708499; margin-top:15px;">Назад</p>
+            </div>
         </div>
     </div>
 
     <div id="main-app" class="app" style="display:none">
         <aside class="sidebar">
-            <div class="side-header"><b id="my-name"></b></div>
-            <div class="search-box">
-                <input type="text" id="u-search" placeholder="Поиск ника...">
-                <button onclick="search()"><i class="fa-solid fa-plus"></i></button>
+            <div class="side-header">
+                <img id="my-avatar" class="avatar-clickable" onclick="changeAvatar()">
+                <span id="my-name"></span>
             </div>
-            <div id="contacts" class="contacts"></div>
+            <form class="search-box" onsubmit="search(); return false;">
+                <input type="text" id="u-search" placeholder="Поиск ника...">
+                <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+            <div id="contacts" class="contacts-list"></div>
         </aside>
-        <main class="chat">
-            <div id="no-chat" class="centered">Выберите чат</div>
+        <main class="chat-area">
+            <div id="no-chat" class="empty-view">Выберите чат</div>
             <div id="chat-win" style="display:none; flex:1; flex-direction:column;">
-                <header class="chat-header"><span id="chat-with"></span></header>
-                <div id="messages" class="messages"></div>
-                <div class="input-area">
-                    <input type="text" id="m-input" placeholder="Напишите сообщение...">
-                    <button onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
+                <header class="chat-header">
+                    <img id="chat-avatar" class="avatar-min">
+                    <b id="chat-with"></b>
+                </header>
+                <div id="messages"></div>
+                <form class="input-row" onsubmit="send(); return false;">
+                    <input type="text" id="m-input" placeholder="Напишите сообщение..." autocomplete="off">
+                    <button type="submit" class="btn-icon"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
             </div>
         </main>
     </div>
