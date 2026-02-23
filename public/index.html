@@ -12,7 +12,10 @@
         <div id="login-form" class="auth-card">
             <div class="logo"><i class="fa-solid fa-user-shield"></i><h1>NEBULA</h1></div>
             <input type="text" id="l-nick" placeholder="Никнейм">
-            <input type="password" id="l-pass" placeholder="Пароль">
+            <div class="pass-box">
+                <input type="password" id="l-pass" placeholder="Пароль">
+                <i class="fa-solid fa-eye-slash toggle-pass" onclick="togglePass('l-pass', this)"></i>
+            </div>
             <button id="btn-do-login">Войти</button>
             <p>Нет аккаунта? <a href="#" id="go-to-reg">Регистрация</a></p>
         </div>
@@ -20,15 +23,18 @@
         <div id="reg-form" class="auth-card" style="display: none;">
             <div class="logo"><i class="fa-solid fa-shield-halved"></i><h1>JOIN</h1></div>
             <input type="text" id="r-nick" placeholder="Никнейм">
-            <input type="email" id="r-email" placeholder="Email (для кода)">
-            <input type="password" id="r-pass" placeholder="Пароль (A-z, 0-9, !@#)">
+            <input type="email" id="r-email" placeholder="Email">
+            <div class="pass-box">
+                <input type="password" id="r-pass" placeholder="Пароль (мин. 6 симв.)">
+                <i class="fa-solid fa-eye-slash toggle-pass" onclick="togglePass('r-pass', this)"></i>
+            </div>
             <button id="btn-do-reg">Выслать код</button>
             <p><a href="#" id="go-to-login">Назад</a></p>
         </div>
 
         <div id="verify-form" class="auth-card" style="display: none;">
             <div class="logo"><i class="fa-solid fa-envelope-open-text"></i><h1>CODE</h1></div>
-            <p id="v-info">Введите код из письма</p>
+            <p>Введите код из письма</p>
             <input type="text" id="v-code" placeholder="6-значный код">
             <button id="btn-verify">Подтвердить</button>
         </div>
