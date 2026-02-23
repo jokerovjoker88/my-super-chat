@@ -20,6 +20,7 @@ async function boot() {
         await db.query(`
             CREATE TABLE IF NOT EXISTS users (
                 username TEXT PRIMARY KEY, 
+                email TEXT,
                 password TEXT, 
                 avatar TEXT, 
                 is_online BOOLEAN DEFAULT FALSE
@@ -34,35 +35,33 @@ async function boot() {
                 is_read BOOLEAN DEFAULT FALSE,
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
-            ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
         `);
-        console.log("=== SERVER ONLINE: AUTH & VOICE READY ===");
+        console.log("=== SERVER ONLINE: AUTH & VOICE SYSTEM READY ===");
     } catch (e) { console.error("DB ERROR:", e); }
 }
 boot();
 
 io.on('connection', (socket) => {
-    socket.on('auth', async ({ nick, pass }) => {
-        if (!nick || !pass) return;
+    // Регистрация
+    socket.on('register', async ({ nick, email, pass }) => {
+        const check = await db.query("SELECT * FROM users WHERE username = $1", [nick]);
+        if (check.rows.length > 0) return socket.emit('auth_error', 'Этот ник уже занят');
         
+        await db.query("INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", [nick, email, pass]);
+        socket.emit('auth_success', 'Регистрация успешна! Теперь вы можете войти.');
+    });
+
+    // Вход
+    socket.on('login', async ({ nick, pass }) => {
         const res = await db.query("SELECT * FROM users WHERE username = $1", [nick]);
         const user = res.rows[0];
-
-        if (user) {
-            if (user.password !== pass) {
-                return socket.emit('auth_error', 'Неверный пароль');
-            }
-        } else {
-            // Регистрация нового пользователя
-            await db.query("INSERT INTO users (username, password, is_online) VALUES ($1, $2, TRUE)", [nick, pass]);
-        }
+        if (!user || user.password !== pass) return socket.emit('auth_error', 'Неверный ник или пароль');
 
         socket.username = nick;
         socket.join(nick);
         await db.query("UPDATE users SET is_online = TRUE WHERE username = $1", [nick]);
-        
-        const userData = await db.query("SELECT avatar FROM users WHERE username = $1", [nick]);
-        socket.emit('auth_ok', { nick, avatar: userData.rows[0]?.avatar });
+        socket.emit('auth_ok', { nick, avatar: user.avatar });
         io.emit('status_update');
     });
 
