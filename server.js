@@ -3,13 +3,13 @@ const http = require('http');
 const { Server } = require('socket.io');
 const { Client } = require('pg');
 const bcrypt = require('bcryptjs');
-const path = require('path');
+const path = require('path'); // Добавь это
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// ВАЖНО: Эта строка говорит серверу искать файлы в папке public
+// Говорим серверу, что папка public — главная для фронтенда
 app.use(express.static(path.join(__dirname, 'public')));
 
 const db = new Client({ 
@@ -17,19 +17,19 @@ const db = new Client({
     ssl: { rejectUnauthorized: false } 
 });
 
-async function init() {
+async function startDB() {
     try {
         await db.connect();
         await db.query(`
             CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, email TEXT UNIQUE, password TEXT, avatar TEXT DEFAULT 'https://cdn-icons-png.flaticon.com/512/149/149071.png');
             CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, sender TEXT, receiver TEXT, content TEXT, type TEXT DEFAULT 'text', ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
         `);
-        console.log("DATABASE CONNECTED");
-    } catch (e) { console.error("DB ERROR:", e); }
+        console.log("NEBULA ONLINE: DATABASE CONNECTED");
+    } catch (e) { console.error("DATABASE ERROR:", e); }
 }
-init();
+startDB();
 
-// Маршрут по умолчанию (если 404 не уходит)
+// Если кто-то зайдет на любую страницу, отдаем index.html
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
