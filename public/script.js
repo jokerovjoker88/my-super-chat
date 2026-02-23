@@ -1,12 +1,5 @@
 const socket = io();
-let me = "", target = "";
-
-function togglePass(id, icon) {
-    const input = document.getElementById(id);
-    input.type = input.type === "password" ? "text" : "password";
-    icon.classList.toggle("fa-eye");
-    icon.classList.toggle("fa-eye-slash");
-}
+let me = "", target = "", mediaRec, chunks = [];
 
 function showForm(id) {
     document.getElementById('login-form').style.display = id==='login-form'?'flex':'none';
@@ -17,13 +10,13 @@ function doReg() {
     const nick = document.getElementById('r-nick').value.trim();
     const email = document.getElementById('r-email').value.trim();
     const pass = document.getElementById('r-pass').value;
-    if(nick && email && pass) socket.emit('register', { nick, email, pass });
+    socket.emit('register', { nick, email, pass });
 }
 
 function doLogin() {
     const nick = document.getElementById('l-nick').value.trim();
     const pass = document.getElementById('l-pass').value;
-    if(nick && pass) socket.emit('login', { nick, pass });
+    socket.emit('login', { nick, pass });
 }
 
 socket.on('auth_ok', d => {
@@ -58,12 +51,45 @@ function openChat(name, avatar) {
     }
 }
 
+// ОТПРАВКА ТЕКСТА
 function send() {
     const i = document.getElementById('m-input');
     if(i.value.trim() && target) {
-        socket.emit('send_msg', { from: me, to: target, text: i.value });
+        socket.emit('send_msg', { from: me, to: target, text: i.value, type: 'text' });
         i.value = '';
     }
+}
+
+// ОТПРАВКА ФОТО / ФАЙЛОВ
+function uploadFile(el) {
+    const file = el.files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+        const type = file.type.startsWith('image') ? 'image' : 'file';
+        socket.emit('send_msg', { from: me, to: target, text: reader.result, type: type });
+    };
+    reader.readAsDataURL(file);
+}
+
+// ГОЛОСОВЫЕ
+async function startVoice() {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRec = new MediaRecorder(stream);
+    chunks = [];
+    mediaRec.ondataavailable = e => chunks.push(e.data);
+    mediaRec.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/ogg' });
+        const r = new FileReader();
+        r.onload = () => socket.emit('send_msg', { from: me, to: target, text: r.result, type: 'audio' });
+        r.readAsDataURL(blob);
+    };
+    mediaRec.start();
+    document.getElementById('mic-btn').style.color = 'red';
+}
+
+function stopVoice() {
+    if(mediaRec) mediaRec.stop();
+    document.getElementById('mic-btn').style.color = '#40a7e3';
 }
 
 socket.on('new_msg', d => {
@@ -79,11 +105,19 @@ function renderMsg(m) {
     const b = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = `msg-bubble ${m.sender === me ? 'me' : 'them'}`;
+    
+    let html = '';
+    if(m.type === 'image') html = `<img src="${m.content || m.text}" class="chat-img" onclick="window.open(this.src)">`;
+    else if(m.type === 'audio') html = `<audio src="${m.content || m.text}" controls></audio>`;
+    else if(m.type === 'file') html = `<a href="${m.content || m.text}" download="file" style="color:#fff">📁 Файл</a>`;
+    else html = `<span>${m.content || m.text}</span>`;
+
     const tick = m.sender === me ? (m.is_read ? ' <i class="fa-solid fa-check-double" style="color:#40a7e3"></i>' : ' <i class="fa-solid fa-check"></i>') : '';
-    d.innerHTML = `<span>${m.content}</span><small>${m.time}${tick}</small>`;
+    d.innerHTML = `${html}<small>${m.time || ''}${tick}</small>`;
+    
     b.appendChild(d);
     b.scrollTop = b.scrollHeight;
 }
 
 socket.on('auth_error', m => alert(m));
-socket.on('auth_success', m => { alert(m); showForm('login-form'); });
+socket.on('auth_success', m => { alert(m); showForm('login-form'); });ы
