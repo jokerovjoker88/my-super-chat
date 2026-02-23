@@ -1,22 +1,21 @@
 const socket = io();
 let me = "", target = "";
 
-function showForm(id) {
-    document.getElementById('login-form').style.display = id==='login-form'?'flex':'none';
-    document.getElementById('reg-form').style.display = id==='reg-form'?'flex':'none';
-}
-
-function doReg() {
-    const nick = document.getElementById('r-nick').value.trim();
-    const email = document.getElementById('r-email').value.trim();
-    const pass = document.getElementById('r-pass').value;
-    socket.emit('register', { nick, email, pass });
+function toggleAuth(reg) {
+    document.getElementById('reg-form').style.display = reg ? 'flex' : 'none';
 }
 
 function doLogin() {
-    const nick = document.getElementById('l-nick').value.trim();
+    const nick = document.getElementById('l-nick').value;
     const pass = document.getElementById('l-pass').value;
-    socket.emit('login', { nick, pass });
+    if(nick && pass) socket.emit('login', { nick, pass });
+}
+
+function doReg() {
+    const nick = document.getElementById('r-nick').value;
+    const email = document.getElementById('r-email').value;
+    const pass = document.getElementById('r-pass').value;
+    if(nick && email && pass) socket.emit('register', { nick, email, pass });
 }
 
 socket.on('auth_ok', d => {
@@ -24,35 +23,41 @@ socket.on('auth_ok', d => {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'flex';
     document.getElementById('my-name').innerText = me;
+    document.getElementById('my-avatar').src = d.avatar;
 });
 
 function search() {
-    const n = document.getElementById('u-search').value.trim();
-    if(n) socket.emit('search_user', n);
+    const val = document.getElementById('u-search').value;
+    if(val) socket.emit('search_user', val);
 }
 
-socket.on('user_found', u => openChat(u.username));
+socket.on('user_found', u => openChat(u.username, u.avatar));
 
-function openChat(name) {
+function openChat(name, avatar) {
     target = name;
     document.getElementById('no-chat').style.display = 'none';
     document.getElementById('chat-win').style.display = 'flex';
     document.getElementById('chat-with').innerText = name;
+    document.getElementById('chat-avatar').src = avatar;
     socket.emit('load_chat', { me, him: name });
-
-    if(!document.getElementById('c-'+name)) {
-        const d = document.createElement('div');
-        d.id = 'c-'+name; d.className = 'contact'; d.innerText = name;
-        d.onclick = () => openChat(name);
-        document.getElementById('contacts').appendChild(d);
+    
+    if(!document.getElementById('c-' + name)) {
+        const item = document.createElement('div');
+        item.id = 'c-' + name;
+        item.className = 'contact-item';
+        item.innerHTML = `<img src="${avatar}" class="avatar-min"> <span>${name}</span>`;
+        item.onclick = () => openChat(name, avatar);
+        document.getElementById('contacts').appendChild(item);
     }
 }
 
 function send() {
-    const i = document.getElementById('m-input');
-    if(i.value.trim()) {
-        socket.emit('send_msg', { from: me, to: target, text: i.value });
-        i.value = '';
+    const input = document.getElementById('m-input');
+    const content = input.value.trim();
+    if(content && target) {
+        socket.emit('send_msg', { from: me, to: target, content: content, type: 'text' });
+        input.value = '';
+        input.focus();
     }
 }
 
@@ -61,20 +66,26 @@ socket.on('new_msg', d => {
 });
 
 socket.on('chat_history', h => {
-    const b = document.getElementById('messages'); b.innerHTML = '';
+    const box = document.getElementById('messages');
+    box.innerHTML = '';
     h.forEach(renderMsg);
 });
 
 function renderMsg(m) {
-    const b = document.getElementById('messages');
-    const d = document.createElement('div');
-    d.className = `bubble ${m.sender === me ? 'me' : 'them'}`;
-    // Галочки для статуса прочитано
-    const status = m.sender === me ? (m.is_read ? ' <i class="fa-solid fa-check-double"></i>' : ' <i class="fa-solid fa-check"></i>') : '';
-    d.innerHTML = `<span>${m.content}</span><small>${m.time}${status}</small>`;
-    b.appendChild(d);
-    b.scrollTop = b.scrollHeight;
+    const box = document.getElementById('messages');
+    const div = document.createElement('div');
+    const isMe = (m.from === me || m.sender === me);
+    div.className = `msg-bubble ${isMe ? 'me' : 'them'}`;
+    div.innerHTML = `<span>${m.content}</span><small>${m.time || ''}</small>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
 }
 
+function changeAvatar() {
+    const url = prompt("Ссылка на фото:");
+    if(url) socket.emit('update_avatar', url);
+}
+
+socket.on('avatar_updated', url => { document.getElementById('my-avatar').src = url; });
 socket.on('auth_error', m => alert(m));
-socket.on('auth_success', m => { alert(m); showForm('login-form'); });
+socket.on('auth_success', () => { alert("Регистрация успешна!"); toggleAuth(false); });
