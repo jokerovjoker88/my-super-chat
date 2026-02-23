@@ -51,14 +51,27 @@ function openChat(name, avatar) {
     }
 }
 
-function send() {
+function send(event) {
+    // 1. ПЕРВАЯ ЛИНИЯ ЗАЩИТЫ: Если событие пришло, блокируем его
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
     const input = document.getElementById('m-input');
     const content = input.value.trim();
+    
     if(content && target) {
+        // 2. ОТПРАВЛЯЕМ
         socket.emit('send_msg', { from: me, to: target, content: content, type: 'text' });
+        
+        // 3. ОЧИЩАЕМ
         input.value = '';
         input.focus();
     }
+    
+    // 4. ВТОРАЯ ЛИНИЯ ЗАЩИТЫ: возвращаем false для HTML
+    return false;
 }
 
 socket.on('new_msg', d => {
@@ -89,3 +102,4 @@ function changeAvatar() {
 socket.on('avatar_updated', url => { document.getElementById('my-avatar').src = url; });
 socket.on('auth_error', m => alert(m));
 socket.on('auth_success', () => { alert("Регистрация успешна!"); toggleAuth(false); });
+
