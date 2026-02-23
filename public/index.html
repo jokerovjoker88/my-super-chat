@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nebula Secure</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,56 +12,48 @@
         <div id="login-form" class="auth-card">
             <div class="logo"><i class="fa-solid fa-user-shield"></i><h1>NEBULA</h1></div>
             <input type="text" id="l-nick" placeholder="Никнейм">
-            <div class="pass-box">
+            <div class="pass-wrapper">
                 <input type="password" id="l-pass" placeholder="Пароль">
-                <i class="fa-solid fa-eye-slash toggle-pass" onclick="togglePass('l-pass', this)"></i>
+                <i class="fa-solid fa-eye-slash toggle-pass" onclick="toggleEye('l-pass', this)"></i>
             </div>
             <button id="btn-do-login">Войти</button>
-            <p>Нет аккаунта? <a href="#" id="go-to-reg">Регистрация</a></p>
+            <p>Нет аккаунта? <a href="#" onclick="showForm('reg-form')">Регистрация</a></p>
         </div>
 
         <div id="reg-form" class="auth-card" style="display: none;">
             <div class="logo"><i class="fa-solid fa-shield-halved"></i><h1>JOIN</h1></div>
-            <input type="text" id="r-nick" placeholder="Никнейм">
-            <input type="email" id="r-email" placeholder="Email">
-            <div class="pass-box">
-                <input type="password" id="r-pass" placeholder="Пароль (мин. 6 симв.)">
-                <i class="fa-solid fa-eye-slash toggle-pass" onclick="togglePass('r-pass', this)"></i>
+            <input type="text" id="r-nick" placeholder="Придумайте ник">
+            <input type="email" id="r-email" placeholder="Ваша почта">
+            <div class="pass-wrapper">
+                <input type="password" id="r-pass" placeholder="Пароль (6+ знаков)">
+                <i class="fa-solid fa-eye-slash toggle-pass" onclick="toggleEye('r-pass', this)"></i>
             </div>
             <button id="btn-do-reg">Выслать код</button>
-            <p><a href="#" id="go-to-login">Назад</a></p>
+            <p><a href="#" onclick="showForm('login-form')">Назад</a></p>
         </div>
 
         <div id="verify-form" class="auth-card" style="display: none;">
             <div class="logo"><i class="fa-solid fa-envelope-open-text"></i><h1>CODE</h1></div>
-            <p>Введите код из письма</p>
-            <input type="text" id="v-code" placeholder="6-значный код">
+            <p>Код отправлен на почту</p>
+            <input type="text" id="v-code" placeholder="6 цифр">
             <button id="btn-verify">Подтвердить</button>
         </div>
     </div>
 
     <div id="main-app" class="app" style="display: none;">
-        <aside class="sidebar">
+        <div class="sidebar">
             <div class="my-header"><b id="my-name">...</b></div>
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="user-search" placeholder="Поиск ника...">
-                <button id="search-btn"><i class="fa-solid fa-plus"></i></button>
-            </div>
             <div id="dialogs" class="dialogs"></div>
-        </aside>
-        <main class="chat-view">
-            <div id="welcome" class="centered">Выберите контакт</div>
-            <div id="chat-box" style="display: none; flex-direction: column; height: 100%;">
-                <header class="chat-header"><span id="target-name">...</span></header>
-                <div id="messages" class="messages pattern-bg"></div>
-                <footer class="input-bar">
-                    <input type="text" id="msg-input" placeholder="Сообщение...">
-                    <button id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-                </footer>
+        </div>
+        <div class="chat-view">
+            <div id="messages" class="messages"></div>
+            <div class="input-bar">
+                <input type="text" id="msg-input" placeholder="Напишите...">
+                <button id="send-btn">Отправить</button>
             </div>
-        </main>
+        </div>
     </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
