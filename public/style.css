@@ -1,38 +1,39 @@
 :root { --bg: #0e1621; --side: #17212b; --blue: #40a7e3; --acc: #2b5278; }
 body { margin: 0; background: var(--bg); color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; }
 
+/* Тот самый старый дизайн авторизации */
 .auth-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); z-index: 100; }
-.auth-card { background: var(--side); padding: 40px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; width: 300px; text-align: center; }
+.auth-card { background: var(--side); padding: 40px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 .logo i { font-size: 3rem; color: var(--blue); margin-bottom: 10px; }
+input { padding: 12px; border-radius: 10px; border: 1px solid #333; background: #242f3d; color: white; outline: none; }
+button { padding: 12px; background: var(--blue); border: none; border-radius: 10px; color: white; cursor: pointer; font-weight: bold; }
 
+/* Приложение */
 .app { display: flex; height: 100vh; }
 .sidebar { width: 300px; background: var(--side); border-right: 1px solid #000; display: flex; flex-direction: column; }
 .side-header { padding: 15px; background: #242f3d; display: flex; align-items: center; gap: 10px; }
+.avatar-clickable { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid var(--blue); }
 .avatar-min { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
-
-.search-box { padding: 10px; display: flex; gap: 5px; }
-.search-box input { flex: 1; padding: 8px; border-radius: 5px; border: none; background: #242f3d; color: #fff; }
 
 .contact-item { padding: 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-bottom: 1px solid #0e1621; }
 .contact-item:hover { background: var(--acc); }
 
 .chat-area { flex: 1; display: flex; flex-direction: column; background: #0b141a; }
-.empty-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #54626d; }
+.chat-header { padding: 10px 20px; background: var(--side); display: flex; align-items: center; gap: 12px; }
+.chat-info small { color: var(--blue); }
 
 .messages-container { 
     flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; 
-    background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-    background-size: 350px;
+    background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png') center;
 }
 
-.msg-bubble { max-width: 70%; padding: 8px 15px; border-radius: 15px; display: flex; flex-direction: column; position: relative; }
+.msg-bubble { max-width: 70%; padding: 8px 15px; border-radius: 15px; display: flex; flex-direction: column; }
 .msg-bubble.me { align-self: flex-end; background: var(--acc); }
 .msg-bubble.them { align-self: flex-start; background: #182533; }
 .msg-bubble small { font-size: 0.65rem; align-self: flex-end; opacity: 0.6; margin-top: 4px; }
 
-.chat-img { max-width: 100%; border-radius: 10px; cursor: pointer; }
+.chat-img { max-width: 100%; border-radius: 10px; }
 audio { height: 35px; width: 200px; }
 
-.input-row { padding: 15px; background: var(--side); display: flex; align-items: center; gap: 10px; }
-.input-row input { flex: 1; background: none; border: none; color: white; outline: none; }
-.file-label, #mic-btn { color: var(--blue); font-size: 1.3rem; cursor: pointer; background: none; border: none; }
+.input-row { padding: 15px; background: var(--side); display: flex; gap: 10px; align-items: center; }
+.input-row input { flex: 1; background: none; border: none; color: white; }
