@@ -3,44 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula</title>
+    <title>Nebula Secure</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <div id="auth-screen">
-        <div id="login-form" class="card">
-            <h2>ВХОД</h2>
-            <input type="text" id="l-nick" placeholder="Ник">
-            <div class="pass-box">
+    <div id="auth-screen" class="auth-overlay">
+        <div id="login-form" class="auth-card">
+            <div class="logo"><i class="fa-solid fa-user-shield"></i><h1>NEBULA</h1></div>
+            <input type="text" id="l-nick" placeholder="Никнейм">
+            <div class="pass-wrapper">
                 <input type="password" id="l-pass" placeholder="Пароль">
-                <i class="fa-solid fa-eye-slash" onclick="eye('l-pass', this)"></i>
+                <i class="fa-solid fa-eye-slash toggle-eye" onclick="togglePass('l-pass', this)"></i>
             </div>
             <button onclick="doLogin()">Войти</button>
-            <p onclick="show('reg-form')">Создать аккаунт</p>
+            <p>Нет аккаунта? <a href="#" onclick="showForm('reg-form')">Регистрация</a></p>
         </div>
 
-        <div id="reg-form" class="card" style="display:none">
-            <h2>РЕГИСТРАЦИЯ</h2>
-            <input type="text" id="r-nick" placeholder="Ник">
-            <input type="email" id="r-email" placeholder="Email">
-            <div class="pass-box">
-                <input type="password" id="r-pass" placeholder="Пароль (A-z, 0-9)">
-                <i class="fa-solid fa-eye-slash" onclick="eye('r-pass', this)"></i>
+        <div id="reg-form" class="auth-card" style="display: none;">
+            <div class="logo"><i class="fa-solid fa-shield-halved"></i><h1>JOIN</h1></div>
+            <input type="text" id="r-nick" placeholder="Придумайте ник">
+            <input type="email" id="r-email" placeholder="Ваша почта">
+            <div class="pass-wrapper">
+                <input type="password" id="r-pass" placeholder="Пароль (6+ знаков)">
+                <i class="fa-solid fa-eye-slash toggle-eye" onclick="togglePass('r-pass', this)"></i>
             </div>
-            <button onclick="doReg()">Выслать код</button>
-            <p onclick="show('login-form')">Назад</p>
-        </div>
-
-        <div id="verify-form" class="card" style="display:none">
-            <h2>КОД ИЗ ПИСЬМА</h2>
-            <input type="text" id="v-code" placeholder="6 цифр">
-            <button onclick="doVerify()">Подтвердить</button>
+            <button onclick="doReg()">Создать аккаунт</button>
+            <p><a href="#" onclick="showForm('login-form')">Назад ко входу</a></p>
         </div>
     </div>
 
-    <div id="app" style="display:none">
-        <h1>Добро пожаловать, <span id="user"></span>!</h1>
+    <div id="main-app" class="app" style="display: none;">
+        <div class="sidebar">
+            <div class="header">Чат: <b id="my-name"></b></div>
+        </div>
+        <div class="chat-view">
+            <div class="pattern-bg welcome-msg">
+                <h2>Вы в системе!</h2>
+                <p>Теперь вы можете общаться.</p>
+            </div>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
