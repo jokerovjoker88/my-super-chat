@@ -38,10 +38,8 @@ async function boot() {
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        console.log("=== NEBULA V5: СИСТЕМА ГОТОВА ===");
-    } catch (e) { 
-        console.error("ОШИБКА БД:", e); 
-    }
+        console.log("NEBULA V5: ONLINE");
+    } catch (e) { console.error("DB ERROR:", e); }
 }
 boot();
 
@@ -50,38 +48,31 @@ io.on('connection', (socket) => {
         try {
             const hashed = await bcrypt.hash(d.pass, 10);
             await db.query("INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", [d.nick, d.email, hashed]);
-            socket.emit('auth_success', 'Аккаунт создан!');
-        } catch (e) { 
-            socket.emit('auth_error', 'Ник или почта уже заняты'); 
-        }
+            socket.emit('auth_success', 'Успех!');
+        } catch (e) { socket.emit('auth_error', 'Ник занят'); }
     });
 
     socket.on('login', async (d) => {
-        try {
-            const res = await db.query("SELECT * FROM users WHERE username = $1", [d.nick]);
-            const user = res.rows[0];
-            if (user && await bcrypt.compare(d.pass, user.password)) {
-                socket.username = user.username;
-                socket.join(user.username);
-                socket.emit('auth_ok', { nick: user.username, avatar: user.avatar });
-            } else { 
-                socket.emit('auth_error', 'Неверный логин или пароль'); 
-            }
-        } catch (e) {
-            socket.emit('auth_error', 'Ошибка сервера');
-        }
+        const res = await db.query("SELECT * FROM users WHERE username = $1", [d.nick]);
+        const user = res.rows[0];
+        if (user && await bcrypt.compare(d.pass, user.password)) {
+            socket.username = user.username;
+            socket.join(user.username);
+            socket.emit('auth_ok', { nick: user.username, avatar: user.avatar });
+        } else { socket.emit('auth_error', 'Ошибка входа'); }
     });
 
     socket.on('update_avatar', async (url) => {
-        if (!socket.username) return;
-        await db.query("UPDATE users SET avatar = $1 WHERE username = $2", [url, socket.username]);
-        socket.emit('avatar_updated', url);
+        if (socket.username) {
+            await db.query("UPDATE users SET avatar = $1 WHERE username = $2", [url, socket.username]);
+            socket.emit('avatar_updated', url);
+        }
     });
 
     socket.on('search_user', async (name) => {
         const res = await db.query("SELECT username, avatar FROM users WHERE username = $1", [name]);
         if (res.rows[0]) socket.emit('user_found', res.rows[0]);
-        else socket.emit('auth_error', 'Пользователь не найден');
+        else socket.emit('auth_error', 'Никто не найден');
     });
 
     socket.on('load_chat', async (d) => {
@@ -90,22 +81,4 @@ io.on('connection', (socket) => {
             SELECT sender, content, type, is_read, to_char(ts, 'HH24:MI') as time 
             FROM messages WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1) 
             ORDER BY ts ASC`, [d.me, d.him]);
-        socket.emit('chat_history', res.rows);
-    });
-
-    socket.on('send_msg', async (d) => {
-        try {
-            const res = await db.query(
-                "INSERT INTO messages (sender, receiver, content, type) VALUES ($1, $2, $3, $4) RETURNING to_char(ts, 'HH24:MI') as time",
-                [d.from, d.to, d.content, d.type || 'text']
-            );
-            io.to(d.to).to(d.from).emit('new_msg', { ...d, time: res.rows[0].time, is_read: false });
-        } catch (e) {
-            console.error("Ошибка отправки:", e);
-        }
-    });
-});
-
-server.listen(process.env.PORT || 10000, () => {
-    console.log("Сервер запущен на порту " + (process.env.PORT || 10000));
-});
+        socket.emit('chat_history
