@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nebula Secure</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -14,17 +14,16 @@
             <input type="text" id="l-nick" placeholder="Никнейм">
             <input type="password" id="l-pass" placeholder="Пароль">
             <button id="btn-do-login">Войти</button>
-            <p>Нет аккаунта? <a href="#" id="go-to-reg">Создать</a></p>
+            <p>Нет аккаунта? <a href="#" id="go-to-reg">Регистрация</a></p>
         </div>
-
         <div id="reg-form" class="auth-card" style="display: none;">
-            <div class="logo"><i class="fa-solid fa-shield-halved"></i><h1>JOIN US</h1></div>
+            <div class="logo"><i class="fa-solid fa-shield-halved"></i><h1>JOIN</h1></div>
             <input type="text" id="r-nick" placeholder="Никнейм">
             <input type="email" id="r-email" placeholder="Email">
             <input type="password" id="r-pass" placeholder="Пароль">
             <input type="password" id="r-pass2" placeholder="Повторите пароль">
-            <button id="btn-do-reg">Регистрация</button>
-            <p>Есть аккаунт? <a href="#" id="go-to-login">Войти</a></p>
+            <button id="btn-do-reg">Создать аккаунт</button>
+            <p><a href="#" id="go-to-login">Назад к входу</a></p>
         </div>
     </div>
 
@@ -38,16 +37,14 @@
             </div>
             <div id="dialogs" class="dialogs"></div>
         </aside>
-
         <main class="chat-view">
             <div id="welcome" class="centered">Выберите контакт</div>
-            <div id="chat-box" style="display: none;">
-                <header class="chat-header">
-                    <span id="target-name">...</span>
-                </header>
-                <div id="messages" class="messages chat-bg"></div> <footer class="input-bar">
+            <div id="chat-box" style="display: none; flex-direction: column; height: 100%;">
+                <header class="chat-header"><span id="target-name">...</span></header>
+                <div id="messages" class="messages pattern-bg"></div>
+                <footer class="input-bar">
                     <label class="attach"><i class="fa-solid fa-paperclip"></i><input type="file" id="file-input" hidden></label>
-                    <input type="text" id="msg-input" placeholder="Напишите сообщение...">
+                    <input type="text" id="msg-input" placeholder="Сообщение...">
                     <button id="voice-btn" class="voice-btn"><i class="fa-solid fa-microphone"></i></button>
                     <button id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                 </footer>
