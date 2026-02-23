@@ -21,9 +21,9 @@ async function boot() {
         await db.connect();
         await db.query(`
             CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, email TEXT UNIQUE, password TEXT, avatar TEXT DEFAULT 'https://cdn-icons-png.flaticon.com/512/149/149071.png');
-            CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, sender TEXT, receiver TEXT, content TEXT, type TEXT DEFAULT 'text', ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, sender TEXT, receiver TEXT, content TEXT, type TEXT DEFAULT 'text', is_read BOOLEAN DEFAULT false, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
         `);
-        console.log("DATABASE READY");
+        console.log("=== NEBULA SYSTEM ONLINE ===");
     } catch (e) { console.error("DB Error:", e); }
 }
 boot();
@@ -48,7 +48,7 @@ io.on('connection', (socket) => {
             socket.username = u.username;
             socket.join(u.username);
             socket.emit('auth_ok', { nick: u.username, avatar: u.avatar });
-        } else { socket.emit('auth_error', 'Ошибка входа'); }
+        } else { socket.emit('auth_error', 'Неверный логин'); }
     });
 
     socket.on('update_avatar', async (url) => {
@@ -65,7 +65,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('load_chat', async (d) => {
-        const res = await db.query("SELECT sender as from, receiver as to, content, type, to_char(ts, 'HH24:MI') as time FROM messages WHERE (sender=$1 AND receiver=$2) OR (sender=$2 AND receiver=$1) ORDER BY ts ASC", [d.me, d.him]);
+        const res = await db.query("SELECT sender as from, content, type, to_char(ts, 'HH24:MI') as time FROM messages WHERE (sender=$1 AND receiver=$2) OR (sender=$2 AND receiver=$1) ORDER BY ts ASC", [d.me, d.him]);
         socket.emit('chat_history', res.rows);
     });
 
