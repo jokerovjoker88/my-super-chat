@@ -29,7 +29,10 @@ socket.on('auth_ok', d => {
 
 function search() {
     const val = document.getElementById('u-search').value;
-    if(val) socket.emit('search_user', val);
+    if(val) {
+        socket.emit('search_user', val);
+        document.getElementById('u-search').value = '';
+    }
 }
 
 socket.on('user_found', u => openChat(u.username, u.avatar));
@@ -54,9 +57,20 @@ function openChat(name, avatar) {
 
 function send() {
     const input = document.getElementById('m-input');
-    if(input.value.trim() && target) {
-        socket.emit('send_msg', { from: me, to: target, content: input.value, type: 'text' });
+    const content = input.value.trim();
+    if(content && target) {
+        socket.emit('send_msg', { from: me, to: target, content: content, type: 'text' });
         input.value = '';
+        input.focus();
+    }
+}
+
+function upload(el) {
+    const file = el.files[0];
+    if(file) {
+        const reader = new FileReader();
+        reader.onload = () => socket.emit('send_msg', { from: me, to: target, content: reader.result, type: 'image' });
+        reader.readAsDataURL(file);
     }
 }
 
@@ -65,25 +79,29 @@ socket.on('new_msg', d => {
 });
 
 socket.on('chat_history', h => {
-    document.getElementById('messages').innerHTML = '';
+    const box = document.getElementById('messages');
+    box.innerHTML = '';
     h.forEach(renderMsg);
 });
 
 function renderMsg(m) {
     const box = document.getElementById('messages');
     const div = document.createElement('div');
-    const isMe = (m.from === me);
+    const isMe = (m.from === me || m.sender === me);
     div.className = `msg-bubble ${isMe ? 'me' : 'them'}`;
-    div.innerHTML = `<span>${m.content}</span><small>${m.time || ''}</small>`;
+    
+    let html = m.type === 'image' ? `<img src="${m.content}" class="chat-img">` : `<span>${m.content}</span>`;
+    div.innerHTML = `${html}<small>${m.time || ''}</small>`;
+    
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
 }
 
 function changeAvatar() {
-    const url = prompt("Ссылка на фото:");
+    const url = prompt("Прямая ссылка на фото:");
     if(url) socket.emit('update_avatar', url);
 }
 
 socket.on('avatar_updated', url => { document.getElementById('my-avatar').src = url; });
 socket.on('auth_error', m => alert(m));
-socket.on('auth_success', () => toggleAuth(false));
+socket.on('auth_success', () => { alert("Успешно! Войдите."); toggleAuth(false); });
