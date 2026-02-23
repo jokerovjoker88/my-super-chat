@@ -27,7 +27,6 @@ socket.on('auth_ok', d => {
 });
 
 function search() { socket.emit('search_user', document.getElementById('u-search').value); }
-
 socket.on('user_found', u => openChat(u.username, u.avatar));
 
 function openChat(name, avatar) {
@@ -79,9 +78,10 @@ function renderMsg(m) {
 }
 
 function changeAvatar() {
-    const url = prompt("Ссылка на фото:");
+    const url = prompt("Вставьте прямую ссылку на фото (например, из ВК или Pinterest):");
     if(url) socket.emit('update_avatar', url);
 }
+
 socket.on('avatar_updated', url => { document.getElementById('my-avatar').src = url; });
-socket.on('auth_error', (m) => alert(m || "Ошибка"));
-socket.on('auth_success', () => { alert("Успех!"); toggleAuth(false); });
+socket.on('auth_error', m => alert(m || "Ошибка"));
+socket.on('auth_success', () => { alert("Успешно! Теперь войдите."); toggleAuth(false); });
