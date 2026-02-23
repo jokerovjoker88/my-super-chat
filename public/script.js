@@ -1,6 +1,13 @@
 const socket = io();
 let me = "", target = "";
 
+function togglePass(id, icon) {
+    const input = document.getElementById(id);
+    input.type = input.type === "password" ? "text" : "password";
+    icon.classList.toggle("fa-eye");
+    icon.classList.toggle("fa-eye-slash");
+}
+
 function showForm(id) {
     document.getElementById('login-form').style.display = id==='login-form'?'flex':'none';
     document.getElementById('reg-form').style.display = id==='reg-form'?'flex':'none';
@@ -16,7 +23,7 @@ function doReg() {
 function doLogin() {
     const nick = document.getElementById('l-nick').value.trim();
     const pass = document.getElementById('l-pass').value;
-    socket.emit('login', { nick, pass });
+    if(nick && pass) socket.emit('login', { nick, pass });
 }
 
 socket.on('auth_ok', d => {
@@ -44,8 +51,8 @@ function openChat(name, avatar) {
 
     if(!document.getElementById('c-'+name)) {
         const d = document.createElement('div');
-        d.id = 'c-'+name; d.className = 'contact';
-        d.innerHTML = `<img src="${avatar}" class="avatar"> <span>${name}</span>`;
+        d.id = 'c-'+name; d.className = 'contact-item';
+        d.innerHTML = `<img src="${avatar}" class="avatar-min"> <span>${name}</span>`;
         d.onclick = () => openChat(name, avatar);
         document.getElementById('contacts').appendChild(d);
     }
@@ -71,11 +78,8 @@ socket.on('chat_history', h => {
 function renderMsg(m) {
     const b = document.getElementById('messages');
     const d = document.createElement('div');
-    d.className = `bubble ${m.sender === me ? 'me' : 'them'}`;
-    
-    // Одна галочка - отправлено, две - прочитано
-    const tick = m.sender === me ? (m.is_read ? ' <i class="fa-solid fa-check-double"></i>' : ' <i class="fa-solid fa-check"></i>') : '';
-    
+    d.className = `msg-bubble ${m.sender === me ? 'me' : 'them'}`;
+    const tick = m.sender === me ? (m.is_read ? ' <i class="fa-solid fa-check-double" style="color:#40a7e3"></i>' : ' <i class="fa-solid fa-check"></i>') : '';
     d.innerHTML = `<span>${m.content}</span><small>${m.time}${tick}</small>`;
     b.appendChild(d);
     b.scrollTop = b.scrollHeight;
