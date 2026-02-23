@@ -16,12 +16,12 @@ const db = new Client({
     ssl: { rejectUnauthorized: false }
 });
 
-// НАСТРОЙКА ПОЧТЫ
+// Настройка почты
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'ТВОЙ_EMAIL@gmail.com', 
-        pass: 'ПАРОЛЬ_ПРИЛОЖЕНИЯ' 
+        user: 'jokerovjoker88@gmail.com', 
+        pass: '123789654Jj' 
     }
 });
 
@@ -31,28 +31,21 @@ async function boot() {
     try {
         await db.connect();
         await db.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                username TEXT PRIMARY KEY, email TEXT, password TEXT, is_online BOOLEAN DEFAULT FALSE
-            );
-            CREATE TABLE IF NOT EXISTS messages (
-                id SERIAL PRIMARY KEY, sender TEXT, receiver TEXT, content TEXT, 
-                file_data TEXT, file_name TEXT, is_read BOOLEAN DEFAULT FALSE, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
+            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, email TEXT, password TEXT);
+            CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, sender TEXT, receiver TEXT, content TEXT, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
         `);
-        console.log("=== NEBULA SERVER ONLINE ===");
-    } catch (e) { console.error("DATABASE ERROR:", e); }
+        console.log("SERVER STARTED");
+    } catch (e) { console.error(e); }
 }
 boot();
 
 io.on('connection', (socket) => {
-    // Регистрация
+    // 1. Запрос на регистрацию
     socket.on('register', async (data) => {
         const { nick, email, pass } = data;
+        // Проверка пароля: буквы и цифры, мин 6 символов
         const passRegex = /^[A-Za-z\d]{6,}$/;
-        
-        if (!passRegex.test(pass)) {
-            return socket.emit('auth_error', 'Пароль: мин. 6 символов (буквы и цифры)');
-        }
+        if (!passRegex.test(pass)) return socket.emit('auth_error', 'Пароль: мин. 6 символов (буквы и цифры)');
 
         try {
             const check = await db.query("SELECT * FROM users WHERE username = $1 OR email = $2", [nick, email]);
@@ -62,42 +55,38 @@ io.on('connection', (socket) => {
             const hashed = await bcrypt.hash(pass, 10);
             tempUsers[email] = { nick, email, hashed, code };
 
-            const mailOptions = {
-                from: '"Nebula Support" <ТВОЙ_EMAIL@gmail.com>',
+            transporter.sendMail({
+                from: '"Nebula" <your-email@gmail.com>',
                 to: email,
-                subject: 'Код подтверждения Nebula',
+                subject: 'Код Nebula',
                 text: `Ваш код: ${code}`
-            };
-
-            transporter.sendMail(mailOptions, (err) => {
-                if (err) return socket.emit('auth_error', 'Ошибка отправки почты');
-                socket.emit('code_sent', email);
+            }, (err) => {
+                if (err) return socket.emit('auth_error', 'Ошибка почты');
+                socket.emit('code_sent');
             });
-        } catch (e) { socket.emit('auth_error', 'Ошибка сервера'); }
+        } catch (e) { socket.emit('auth_error', 'Ошибка БД'); }
     });
 
-    // Код подтверждения
+    // 2. Проверка кода
     socket.on('verify_code', async ({ email, code }) => {
         const user = tempUsers[email];
         if (user && user.code === code) {
-            await db.query("INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", 
-                [user.nick, user.email, user.hashed]);
+            await db.query("INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", [user.nick, user.email, user.hashed]);
             delete tempUsers[email];
-            socket.emit('auth_success', 'Регистрация завершена! Войдите.');
+            socket.emit('auth_success');
         } else {
-            socket.emit('auth_error', 'Неверный код!');
+            socket.emit('auth_error', 'Неверный код');
         }
     });
 
-    // Вход
+    // 3. Вход
     socket.on('login', async ({ nick, pass }) => {
         const res = await db.query("SELECT * FROM users WHERE username = $1", [nick]);
         const user = res.rows[0];
         if (user && await bcrypt.compare(pass, user.password)) {
-            socket.username = nick;
             socket.emit('auth_ok', { nick });
         } else {
-            socket.emit('auth_error', 'Неверный логин или пароль');
+            socket.emit('auth_error', 'Неверный вход');
         }
     });
 });
