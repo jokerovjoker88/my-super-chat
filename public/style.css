@@ -1,22 +1,48 @@
-:root { --bg: #0e1621; --side: #17212b; --blue: #40a7e3; --acc: #2b5278; }
-body { margin: 0; background: var(--bg); color: #fff; font-family: sans-serif; }
-.auth-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); z-index: 100; }
-.auth-card { background: var(--side); padding: 30px; border-radius: 15px; display: flex; flex-direction: column; gap: 10px; width: 280px; text-align: center; }
-.logo i { font-size: 3rem; color: var(--blue); }
-input { padding: 10px; border-radius: 8px; border: 1px solid #333; background: #242f3d; color: white; }
-button { padding: 10px; background: var(--blue); border: none; border-radius: 8px; color: white; cursor: pointer; }
-.app { display: flex; height: 100vh; }
-.sidebar { width: 260px; background: var(--side); display: flex; flex-direction: column; border-right: 1px solid #000; }
-.side-header { padding: 15px; display: flex; align-items: center; gap: 10px; background: #242f3d; }
-.avatar-clickable { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 2px solid var(--blue); }
-.avatar-min { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
-.contact-item { padding: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
-.chat-area { flex: 1; display: flex; flex-direction: column; background: #0b141a; }
-#messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
-.msg-bubble { max-width: 70%; padding: 8px 12px; border-radius: 12px; display: flex; flex-direction: column; }
-.msg-bubble.me { align-self: flex-end; background: var(--acc); }
-.msg-bubble.them { align-self: flex-start; background: #182533; }
-.chat-img { max-width: 200px; border-radius: 8px; }
-.input-row { padding: 15px; background: var(--side); display: flex; align-items: center; gap: 10px; }
-.input-row input { flex: 1; background: none; border: none; color: white; outline: none; }
-.btn-icon { color: var(--blue); font-size: 1.2rem; cursor: pointer; background: none; border: none; }
+:root {
+    --bg-main: #0e1621;           /* Фон чата */
+    --bg-side: #17212b;           /* Фон сайдбара */
+    --bg-item-active: #2b5278;    /* Выбранный контакт */
+    --text-main: #ffffff;
+    --text-secondary: #708499;
+    --blue: #40a7e3;              /* Акцентный синий */
+    --msg-in: #182533;            /* Входящее сообщение */
+    --msg-out: #2b5278;           /* Исходящее сообщение */
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Окно авторизации */
+.auth-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.auth-card {
+    background: var(--bg-side);
+    padding: 40px;
+    border-radius: 12px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.auth-card input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid #242f3d;
+    background: #242f3d;
