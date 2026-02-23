@@ -23,7 +23,7 @@ async function boot() {
             CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, email TEXT UNIQUE, password TEXT, avatar TEXT DEFAULT 'https://cdn-icons-png.flaticon.com/512/149/149071.png');
             CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, sender TEXT, receiver TEXT, content TEXT, type TEXT DEFAULT 'text', is_read BOOLEAN DEFAULT false, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
         `);
-        console.log("=== NEBULA SYSTEM ONLINE ===");
+        console.log("DATABASE READY");
     } catch (e) { console.error("DB Error:", e); }
 }
 boot();
@@ -48,7 +48,7 @@ io.on('connection', (socket) => {
             socket.username = u.username;
             socket.join(u.username);
             socket.emit('auth_ok', { nick: u.username, avatar: u.avatar });
-        } else { socket.emit('auth_error', 'Неверный логин'); }
+        } else { socket.emit('auth_error', 'Ошибка входа'); }
     });
 
     socket.on('update_avatar', async (url) => {
@@ -61,7 +61,6 @@ io.on('connection', (socket) => {
     socket.on('search_user', async (n) => {
         const res = await db.query("SELECT username, avatar FROM users WHERE username = $1", [n]);
         if (res.rows[0]) socket.emit('user_found', res.rows[0]);
-        else socket.emit('auth_error', 'Пользователь не найден');
     });
 
     socket.on('load_chat', async (d) => {
