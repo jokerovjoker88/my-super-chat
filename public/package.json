@@ -1,6 +1,6 @@
 {
   "name": "nebula-secure-chat",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "main": "server.js",
   "dependencies": {
     "express": "^4.18.2",
