@@ -18,7 +18,12 @@ async function boot() {
     try {
         await db.connect();
         await db.query(`
-            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, avatar TEXT, is_online BOOLEAN DEFAULT FALSE);
+            CREATE TABLE IF NOT EXISTS users (
+                username TEXT PRIMARY KEY, 
+                password TEXT, 
+                avatar TEXT, 
+                is_online BOOLEAN DEFAULT FALSE
+            );
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
                 sender TEXT,
@@ -29,23 +34,35 @@ async function boot() {
                 is_read BOOLEAN DEFAULT FALSE,
                 ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
-            ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;
-            ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
-            ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;
         `);
-        console.log("=== SERVER ONLINE: STABLE VERSION ===");
+        console.log("=== SERVER ONLINE: AUTH & VOICE READY ===");
     } catch (e) { console.error("DB ERROR:", e); }
 }
 boot();
 
 io.on('connection', (socket) => {
-    socket.on('auth', async (nick) => {
-        if (!nick) return;
+    socket.on('auth', async ({ nick, pass }) => {
+        if (!nick || !pass) return;
+        
+        const res = await db.query("SELECT * FROM users WHERE username = $1", [nick]);
+        const user = res.rows[0];
+
+        if (user) {
+            if (user.password !== pass) {
+                return socket.emit('auth_error', 'Неверный пароль');
+            }
+        } else {
+            // Регистрация нового пользователя
+            await db.query("INSERT INTO users (username, password, is_online) VALUES ($1, $2, TRUE)", [nick, pass]);
+        }
+
         socket.username = nick;
         socket.join(nick);
-        await db.query("INSERT INTO users (username, is_online) VALUES ($1, TRUE) ON CONFLICT (username) DO UPDATE SET is_online = TRUE", [nick]);
-        const user = await db.query("SELECT avatar FROM users WHERE username = $1", [nick]);
-        socket.emit('auth_ok', { avatar: user.rows[0]?.avatar });
+        await db.query("UPDATE users SET is_online = TRUE WHERE username = $1", [nick]);
+        
+        const userData = await db.query("SELECT avatar FROM users WHERE username = $1", [nick]);
+        socket.emit('auth_ok', { nick, avatar: userData.rows[0]?.avatar });
         io.emit('status_update');
     });
 
@@ -55,9 +72,8 @@ io.on('connection', (socket) => {
 
     socket.on('search_user', async (target) => {
         if (!target) return;
-        await db.query("INSERT INTO users (username) VALUES ($1) ON CONFLICT DO NOTHING", [target]);
         const res = await db.query("SELECT username, avatar, is_online FROM users WHERE username = $1", [target]);
-        socket.emit('user_found', res.rows[0]);
+        if (res.rows.length > 0) socket.emit('user_found', res.rows[0]);
     });
 
     socket.on('get_my_dialogs', async (me) => {
