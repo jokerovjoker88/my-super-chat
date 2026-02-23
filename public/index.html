@@ -9,32 +9,44 @@
 </head>
 <body>
     <div id="auth-screen" class="auth-overlay">
-        <div class="auth-card">
-            <h2>Nebula Chat</h2>
-            <input type="text" id="login-nick" placeholder="Никнейм">
-            <input type="password" id="login-pass" placeholder="Пароль">
-            <button id="login-btn">Войти / Регистрация</button>
-            <p id="auth-msg"></p>
+        <div id="login-form" class="auth-card">
+            <h2>Вход в Nebula</h2>
+            <input type="text" id="l-nick" placeholder="Никнейм">
+            <input type="password" id="l-pass" placeholder="Пароль">
+            <button id="btn-do-login">Войти</button>
+            <p>Нет аккаунта? <a href="#" id="go-to-reg">Создать аккаунт</a></p>
+            <p id="l-msg" class="err-msg"></p>
+        </div>
+
+        <div id="reg-form" class="auth-card" style="display: none;">
+            <h2>Регистрация</h2>
+            <input type="text" id="r-nick" placeholder="Никнейм">
+            <input type="email" id="r-email" placeholder="Электронная почта">
+            <input type="password" id="r-pass" placeholder="Придумайте пароль">
+            <input type="password" id="r-pass2" placeholder="Повторите пароль">
+            <button id="btn-do-reg">Зарегистрироваться</button>
+            <p>Уже есть аккаунт? <a href="#" id="go-to-login">Войти</a></p>
+            <p id="r-msg" class="err-msg"></p>
         </div>
     </div>
 
-    <div class="app" id="main-app" style="display: none;">
+    <div id="main-app" class="app" style="display: none;">
         <aside class="sidebar" id="sidebar">
             <div class="my-header">
-                <label class="ava-box">
+                <div class="ava-wrap on">
                     <img id="my-ava" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
-                    <input type="file" id="ava-input" hidden accept="image/*">
-                </label>
+                </div>
                 <div class="my-info"><b id="my-name">...</b></div>
             </div>
             <div class="search-box">
-                <input type="text" id="user-search" placeholder="Никнейм...">
+                <input type="text" id="user-search" placeholder="Поиск ника...">
                 <button id="search-btn"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="dialogs" class="dialogs"></div>
         </aside>
+
         <main class="chat-view">
-            <div id="welcome" class="centered">Выберите чат</div>
+            <div id="welcome" class="centered">Выберите чат для общения</div>
             <div id="chat-box" style="display: none; flex-direction: column; height: 100%;">
                 <header class="chat-header">
                     <button id="back-btn" class="mobile-only"><i class="fa-solid fa-arrow-left"></i></button>
@@ -46,13 +58,14 @@
                 <div id="messages" class="messages"></div>
                 <footer class="input-bar">
                     <label class="attach"><i class="fa-solid fa-paperclip"></i><input type="file" id="file-input" hidden></label>
-                    <input type="text" id="msg-input" placeholder="Сообщение...">
+                    <input type="text" id="msg-input" placeholder="Напишите сообщение...">
                     <button id="voice-btn" class="voice-btn"><i class="fa-solid fa-microphone"></i></button>
                     <button id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                 </footer>
             </div>
         </main>
     </div>
+
     <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
