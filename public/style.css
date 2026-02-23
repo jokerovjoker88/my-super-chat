@@ -1,16 +1,8 @@
-:root { --bg: #0e1621; --side: #17212b; --blue: #40a7e3; }
-body { margin: 0; background: var(--bg); color: #fff; font-family: sans-serif; }
-
-.auth-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 99; }
-.auth-card { background: var(--side); padding: 30px; border-radius: 15px; display: flex; flex-direction: column; gap: 12px; width: 300px; }
-
-.pass-wrapper { position: relative; width: 100%; }
-.pass-wrapper input { width: 100%; box-sizing: border-box; padding-right: 35px; }
-.toggle-pass { position: absolute; right: 10px; top: 12px; color: #84919a; cursor: pointer; }
-
-input { padding: 12px; border-radius: 8px; border: 1px solid #333; background: #242f3d; color: #fff; outline: none; }
-button { padding: 12px; background: var(--blue); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
-
-.app { display: flex; height: 100vh; }
-.sidebar { width: 260px; background: var(--side); border-right: 1px solid #000; }
-.chat-view { flex: 1; display: flex; flex-direction: column; background: #0b141a; }
+body { margin: 0; background: #0e1621; color: white; font-family: sans-serif; }
+#auth-screen { height: 100vh; display: flex; align-items: center; justify-content: center; }
+.card { background: #17212b; padding: 30px; border-radius: 15px; display: flex; flex-direction: column; gap: 15px; width: 280px; }
+input { padding: 12px; border-radius: 8px; border: 1px solid #333; background: #242f3d; color: white; outline: none; }
+button { padding: 12px; background: #40a7e3; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
+.pass-box { position: relative; display: flex; flex-direction: column; }
+.pass-box i { position: absolute; right: 10px; top: 13px; color: #84919a; cursor: pointer; }
+p { color: #40a7e3; cursor: pointer; text-align: center; font-size: 14px; }
