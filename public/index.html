@@ -8,20 +8,20 @@
 </head>
 <body>
     <div id="auth-screen" class="auth-overlay">
-        <div id="login-form" class="auth-card">
-            <i class="fa-solid fa-user-shield"></i>
+        <div class="auth-card" id="login-form">
+            <i class="fa-solid fa-shield-cat" style="font-size:3rem;color:#40a7e3"></i>
             <h1>NEBULA</h1>
             <input type="text" id="l-nick" placeholder="Никнейм">
             <input type="password" id="l-pass" placeholder="Пароль">
             <button onclick="doLogin()">Войти</button>
-            <p onclick="toggleAuth(true)">Создать аккаунт</p>
+            <p onclick="toggleAuth(true)">Нет аккаунта? Регистрация</p>
         </div>
-        <div id="reg-form" class="auth-card" style="display:none">
+        <div class="auth-card" id="reg-form" style="display:none">
             <h1>РЕГИСТРАЦИЯ</h1>
             <input type="text" id="r-nick" placeholder="Ник">
             <input type="email" id="r-email" placeholder="Email">
             <input type="password" id="r-pass" placeholder="Пароль">
-            <button onclick="doReg()">Зарегистрироваться</button>
+            <button onclick="doReg()">Создать</button>
             <p onclick="toggleAuth(false)">Назад</p>
         </div>
     </div>
@@ -29,26 +29,26 @@
     <div id="main-app" class="app" style="display:none">
         <aside class="sidebar">
             <div class="side-header">
-                <img id="my-avatar" class="avatar-clickable" onclick="changeAvatar()">
+                <img id="my-avatar" class="avatar-clickable" onclick="changeAvatar()" title="Сменить фото">
                 <span id="my-name"></span>
             </div>
             <div class="search-box">
                 <input type="text" id="u-search" placeholder="Поиск ника...">
                 <button onclick="search()"><i class="fa-solid fa-plus"></i></button>
             </div>
-            <div id="contacts"></div>
+            <div id="contacts" class="contacts"></div>
         </aside>
         <main class="chat-area">
             <div id="no-chat" class="empty-view">Выберите чат</div>
-            <div id="chat-win" style="display:none; flex:1; flex-direction:column;">
+            <div id="chat-win" style="display:none; flex:1; flex-direction:column">
                 <header class="chat-header">
                     <img id="chat-avatar" class="avatar-min">
                     <b id="chat-with"></b>
                 </header>
                 <div id="messages"></div>
                 <div class="input-row">
-                    <label class="btn-icon"><i class="fa-solid fa-paperclip"></i><input type="file" hidden onchange="upload(this)"></label>
-                    <input type="text" id="m-input" placeholder="Сообщение..." onkeydown="if(event.key==='Enter') send()">
+                    <label class="btn-icon"><i class="fa-solid fa-image"></i><input type="file" hidden onchange="upload(this)"></label>
+                    <input type="text" id="m-input" placeholder="Напишите сообщение..." onkeydown="if(event.key==='Enter') send()">
                     <button class="btn-icon" onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
