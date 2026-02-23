@@ -1,26 +1,41 @@
 const socket = io();
 let myNick = "";
 let activeChat = null;
+let currentEmail = "";
 
-// Переключение форм
-document.getElementById('go-to-reg').onclick = () => { document.getElementById('login-form').style.display = 'none'; document.getElementById('reg-form').style.display = 'flex'; };
-document.getElementById('go-to-login').onclick = () => { document.getElementById('reg-form').style.display = 'none'; document.getElementById('login-form').style.display = 'flex'; };
+// Переключение окон
+const showForm = (id) => {
+    ['login-form', 'reg-form', 'verify-form'].forEach(f => document.getElementById(f).style.display = f === id ? 'flex' : 'none');
+};
 
-// Авторизация
+document.getElementById('go-to-reg').onclick = () => showForm('reg-form');
+document.getElementById('go-to-login').onclick = () => showForm('login-form');
+
+// Регистрация
 document.getElementById('btn-do-reg').onclick = () => {
     const nick = document.getElementById('r-nick').value.trim();
     const email = document.getElementById('r-email').value.trim();
-    const p1 = document.getElementById('r-pass').value;
-    const p2 = document.getElementById('r-pass2').value;
-    if(p1 !== p2) return alert("Пароли не совпадают!");
-    socket.emit('register', { nick, email, pass: p1 });
+    const pass = document.getElementById('r-pass').value;
+    currentEmail = email;
+    socket.emit('register', { nick, email, pass });
 };
+
+socket.on('code_sent', () => {
+    alert("Код отправлен на вашу почту!");
+    showForm('verify-form');
+});
+
+// Подтверждение
+document.getElementById('btn-verify').onclick = () => {
+    const code = document.getElementById('v-code').value.trim();
+    socket.emit('verify_code', { email: currentEmail, code });
+};
+
+// Вход
 document.getElementById('btn-do-login').onclick = () => {
     socket.emit('login', { nick: document.getElementById('l-nick').value.trim(), pass: document.getElementById('l-pass').value });
 };
 
-socket.on('auth_error', m => alert(m));
-socket.on('auth_success', m => { alert(m); document.getElementById('go-to-login').click(); });
 socket.on('auth_ok', d => {
     myNick = d.nick;
     document.getElementById('auth-screen').style.display = 'none';
@@ -29,7 +44,10 @@ socket.on('auth_ok', d => {
     socket.emit('get_my_dialogs', myNick);
 });
 
-// Отправка (Enter + Кнопка)
+socket.on('auth_success', m => { alert(m); showForm('login-form'); });
+socket.on('auth_error', m => alert(m));
+
+// Сообщения по Enter
 const send = () => {
     const inp = document.getElementById('msg-input');
     if(inp.value.trim() && activeChat) {
@@ -40,7 +58,7 @@ const send = () => {
 document.getElementById('msg-input').onkeydown = (e) => { if(e.key === 'Enter') send(); };
 document.getElementById('send-btn').onclick = send;
 
-// Поиск
+// Поиск и Чат
 document.getElementById('search-btn').onclick = () => {
     const t = document.getElementById('user-search').value.trim();
     if(t) socket.emit('search_user', t);
@@ -55,25 +73,23 @@ function openChat(name) {
     socket.emit('load_chat', { me: myNick, him: name });
 }
 
-function render(s, t, f, fn, time, id, isRead) {
+function render(s, t, time) {
     const box = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = `msg-row ${s === myNick ? 'me' : 'them'}`;
-    const ticks = s === myNick ? `<i class="fa-solid ${isRead ? 'fa-check-double':'fa-check'} status-tick"></i>` : '';
-    let media = f ? `<img src="${f}" style="max-width:100%">` : '';
-    d.innerHTML = `<div class="bubble">${media}<span>${t||''}</span><div class="msg-meta"><small>${time}</small>${ticks}</div></div>`;
+    d.innerHTML = `<div class="bubble"><span>${t}</span><div class="msg-meta"><small>${time}</small></div></div>`;
     box.appendChild(d);
     box.scrollTop = box.scrollHeight;
 }
 
 socket.on('new_msg', d => {
-    if(d.from === activeChat || d.to === activeChat) render(d.from, d.text, d.file, d.fileName, d.time, d.id, d.is_read);
+    if(d.from === activeChat || d.to === activeChat) render(d.from, d.text, d.time);
     socket.emit('get_my_dialogs', myNick);
 });
 
 socket.on('chat_history', ms => {
     const b = document.getElementById('messages'); b.innerHTML = '';
-    ms.forEach(m => render(m.sender, m.content, m.file_data, m.file_name, m.time, m.id, m.is_read));
+    ms.forEach(m => render(m.sender, m.content, m.time));
 });
 
 socket.on('dialogs_list', l => {
