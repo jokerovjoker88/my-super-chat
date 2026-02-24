@@ -1,14 +1,22 @@
 const socket = io();
 let me = "", target = "";
 
-function toggleAuth(reg) { document.getElementById('reg-form').style.display = reg ? 'flex' : 'none'; }
+function toggleAuth(reg) {
+    document.getElementById('login-form').style.display = reg ? 'none' : 'block';
+    document.getElementById('reg-form').style.display = reg ? 'block' : 'none';
+}
 
 function doLogin() {
-    socket.emit('login', { nick: document.getElementById('l-nick').value, pass: document.getElementById('l-pass').value });
+    const nick = document.getElementById('l-nick').value;
+    const pass = document.getElementById('l-pass').value;
+    if(nick && pass) socket.emit('login', { nick, pass });
 }
 
 function doReg() {
-    socket.emit('register', { nick: document.getElementById('r-nick').value, email: document.getElementById('r-email').value, pass: document.getElementById('r-pass').value });
+    const nick = document.getElementById('r-nick').value;
+    const email = document.getElementById('r-email').value;
+    const pass = document.getElementById('r-pass').value;
+    if(nick && email && pass) socket.emit('register', { nick, email, pass });
 }
 
 socket.on('auth_ok', d => {
@@ -32,9 +40,11 @@ function openChat(name, avatar) {
     document.getElementById('chat-win').style.display = 'flex';
     document.getElementById('chat-with').innerText = name;
     socket.emit('load_chat', { me, him: name });
+    
     if(!document.getElementById('c-' + name)) {
         const item = document.createElement('div');
-        item.id = 'c-' + name; item.className = 'contact-item';
+        item.id = 'c-' + name;
+        item.className = 'contact-item';
         item.innerHTML = `<span>${name}</span>`;
         item.onclick = () => openChat(name, avatar);
         document.getElementById('contacts').appendChild(item);
@@ -43,26 +53,32 @@ function openChat(name, avatar) {
 
 function send() {
     const input = document.getElementById('m-input');
-    if(input.value.trim() && target) {
-        socket.emit('send_msg', { from: me, to: target, content: input.value, type: 'text' });
+    const content = input.value.trim();
+    if(content && target) {
+        socket.emit('send_msg', { from: me, to: target, content: content, type: 'text' });
         input.value = '';
     }
 }
 
-socket.on('new_msg', d => { if(d.from === target || d.to === target) renderMsg(d); });
+socket.on('new_msg', d => {
+    if(d.from === target || d.to === target) renderMsg(d);
+});
+
 socket.on('chat_history', h => {
-    document.getElementById('messages').innerHTML = '';
+    const box = document.getElementById('messages');
+    box.innerHTML = '';
     h.forEach(renderMsg);
 });
 
 function renderMsg(m) {
     const box = document.getElementById('messages');
     const div = document.createElement('div');
-    div.className = `msg-bubble ${(m.from === me || m.sender === me) ? 'me' : 'them'}`;
-    div.innerHTML = `<span>${m.content}</span><small>${m.time || ''}</small>`;
+    const isMe = (m.from === me || m.sender === me);
+    div.className = `msg-bubble ${isMe ? 'me' : 'them'}`;
+    div.innerHTML = `<span>${m.content}</span><small>${m.time || ''} ${m.is_read ? '✓✓' : '✓'}</small>`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
 }
 
 socket.on('auth_error', m => alert(m));
-socket.on('auth_success', () => { alert("Регистрация успешна!"); toggleAuth(false); });
+socket.on('auth_success', () => { alert("Регистрация успешна! Теперь войдите."); toggleAuth(false); });
