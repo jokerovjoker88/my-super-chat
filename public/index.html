@@ -1,52 +1,41 @@
-const socket = io();
-let me = "", target = "";
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Nebula Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div id="auth-screen" class="auth-overlay">
+        <div class="auth-card">
+            <h1>NEBULA</h1>
+            <input type="text" id="l-nick" placeholder="Никнейм">
+            <input type="password" id="l-pass" placeholder="Пароль">
+            <button onclick="doLogin()">Войти</button>
+        </div>
+    </div>
 
-function doLogin() {
-    const nick = document.getElementById('l-nick').value;
-    const pass = document.getElementById('l-pass').value;
-    if(nick && pass) socket.emit('login', { nick, pass });
-}
-
-socket.on('auth_ok', d => {
-    me = d.nick;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'flex';
-    document.getElementById('my-name').innerText = me;
-});
-
-function search() {
-    const val = document.getElementById('u-search').value;
-    if(val) {
-        target = val;
-        document.getElementById('chat-win').style.display = 'flex';
-        document.getElementById('chat-with').innerText = target;
-        socket.emit('load_chat', { me, him: target });
-    }
-}
-
-function send() {
-    const input = document.getElementById('m-input');
-    if(input.value.trim() && target) {
-        socket.emit('send_msg', { from: me, to: target, content: input.value, type: 'text' });
-        input.value = '';
-    }
-}
-
-socket.on('new_msg', d => {
-    if(d.from === target || d.to === target) renderMsg(d);
-});
-
-socket.on('chat_history', h => {
-    document.getElementById('messages').innerHTML = '';
-    h.forEach(renderMsg);
-});
-
-function renderMsg(m) {
-    const box = document.getElementById('messages');
-    const div = document.createElement('div');
-    const isMe = (m.from === me || m.sender === me);
-    div.className = `msg-bubble ${isMe ? 'me' : 'them'}`;
-    div.innerHTML = `<span>${m.content}</span><small>${m.time || ''}</small>`;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-}
+    <div id="main-app" class="app" style="display:none">
+        <aside class="sidebar">
+            <div class="side-header"><span id="my-name"></span></div>
+            <div class="search-box">
+                <input type="text" id="u-search" placeholder="Поиск ника...">
+                <button onclick="search()"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+        </aside>
+        <main class="chat-area">
+            <div id="chat-win" style="display:none; flex:1; flex-direction:column;">
+                <header class="chat-header"><b id="chat-with"></b></header>
+                <div id="messages"></div>
+                <form class="input-row" onsubmit="send(); return false;">
+                    <input type="text" id="m-input" placeholder="Сообщение..." autocomplete="off">
+                    <button type="submit" class="btn-icon"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </main>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
