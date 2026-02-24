@@ -3,55 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula 2.0</title>
+    <title>Nebula Chat</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div id="auth-screen" class="overlay">
-        <div class="glass-card">
-            <div class="logo">N</div>
-            <h2>Nebula</h2>
-            <input type="text" id="l-nick" placeholder="Username" autocomplete="off">
-            <input type="password" id="l-pass" placeholder="Password">
-            <button onclick="doLogin()">Connect</button>
+        <div class="auth-box">
+            <h1 class="glow-text">NEBULA</h1>
+            <div id="auth-form">
+                <input type="text" id="nick" placeholder="Username">
+                <input type="password" id="pass" placeholder="Password">
+                <div class="auth-btns">
+                    <button onclick="auth('login')" class="primary-btn">LOGIN</button>
+                    <button onclick="auth('register')" class="secondary-btn">SIGN UP</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="main-app" class="app-container" style="display:none">
+    <div id="main-app" class="app" style="display:none">
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <h3>Chats</h3>
-                <i class="fa-solid fa-gear" onclick="toggleSettings()"></i>
+            <div class="side-head">NEBULA</div>
+            <div class="search-area">
+                <input type="text" id="u-search" placeholder="Find user..." onkeydown="if(event.key==='Enter') search()">
+                <i class="fa-solid fa-magnifying-glass" onclick="search()"></i>
             </div>
-            <div class="search-bar">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="u-search" placeholder="Search user..." onkeydown="if(event.key==='Enter') search()">
-            </div>
-            <div id="contacts-list" class="contacts"></div>
+            <div id="contacts"></div>
         </aside>
-
+        
         <main class="chat-main">
-            <div id="no-chat" class="welcome">
-                <div class="welcome-box">
-                    <i class="fa-regular fa-comments"></i>
-                    <p>Select a user to start messaging</p>
-                </div>
-            </div>
-
-            <div id="chat-win" class="chat-window" style="display:none">
-                <header class="chat-header">
-                    <div class="chat-info">
-                        <b id="chat-with">User</b>
-                        <span>Online</span>
-                    </div>
-                </header>
-                <div id="messages" class="messages-container"></div>
-                <form class="input-area" onsubmit="send(); return false;">
-                    <input type="text" id="m-input" placeholder="Write a message..." autocomplete="off">
+            <div id="chat-win" style="display:none">
+                <div class="chat-head"><b id="chat-with"></b></div>
+                <div id="messages"></div>
+                <form class="input-box" onsubmit="send(); return false;">
+                    <input type="text" id="m-input" placeholder="Enter message..." autocomplete="off">
                     <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
                 </form>
             </div>
+            <div id="welcome" class="welcome-screen">Select chat to start</div>
         </main>
     </div>
 
