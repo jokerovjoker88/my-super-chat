@@ -5,9 +5,12 @@ function auth(type) {
     const nick = document.getElementById('nick').value.trim();
     const pass = document.getElementById('pass').value.trim();
     if(nick && pass) socket.emit(type, { nick, pass });
+    else alert("Please fill all fields");
 }
 
-socket.on('reg_success', () => alert("Registered! Now Login."));
+socket.on('reg_success', () => alert("Account created! Now you can Login."));
+socket.on('error_msg', m => alert(m));
+
 socket.on('auth_ok', d => {
     me = d.nick;
     document.getElementById('auth-screen').style.display = 'none';
@@ -38,7 +41,8 @@ socket.on('new_msg', d => {
 });
 
 socket.on('chat_history', h => {
-    document.getElementById('messages').innerHTML = '';
+    const box = document.getElementById('messages');
+    box.innerHTML = '';
     h.forEach(renderMsg);
 });
 
