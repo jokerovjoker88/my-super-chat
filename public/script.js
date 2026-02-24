@@ -26,8 +26,9 @@ function search() {
 
 function send() {
     const input = document.getElementById('m-input');
-    if(input.value.trim() && target) {
-        socket.emit('send_msg', { from: me, to: target, content: input.value, type: 'text' });
+    const msg = input.value.trim();
+    if(msg && target) {
+        socket.emit('send_msg', { from: me, to: target, content: msg, type: 'text' });
         input.value = '';
     }
 }
@@ -50,3 +51,5 @@ function renderMsg(m) {
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
 }
+
+socket.on('auth_error', m => alert(m));
