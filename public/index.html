@@ -8,40 +8,65 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
+
     <div id="auth-screen" class="auth-overlay">
         <div class="auth-card">
-            <i class="fa-solid fa-paper-plane" style="font-size:3rem; color:var(--light-blue); margin-bottom:20px;"></i>
+            <i class="fa-solid fa-paper-plane" style="font-size: 3rem; color: #40a7e3; margin-bottom: 20px;"></i>
             <h2>NEBULA</h2>
-            <input type="text" id="l-nick" placeholder="Username">
-            <input type="password" id="l-pass" placeholder="Password">
-            <button onclick="doLogin()">START MESSAGING</button>
+            <div class="auth-inputs">
+                <input type="text" id="l-nick" placeholder="Имя пользователя" autocomplete="off">
+                <input type="password" id="l-pass" placeholder="Пароль">
+                <button onclick="doLogin()">ВОЙТИ В ЧАТ</button>
+            </div>
+            <p style="color: #708499; font-size: 12px; margin-top: 15px;">Введите любой ник и пароль</p>
         </div>
     </div>
 
     <div id="main-app" class="app" style="display:none">
+        
         <aside class="sidebar">
-            <div class="side-header">Nebula</div>
-            <div class="search-box">
-                <input type="text" id="u-search" placeholder="Search users..." onkeydown="if(event.key==='Enter') search()">
+            <div class="side-header">
+                <span>Nebula</span>
+                <i class="fa-solid fa-pen-to-square" style="font-size: 16px; color: #40a7e3; cursor: pointer;"></i>
             </div>
-            <div id="contacts" style="overflow-y: auto;"></div>
+            
+            <div class="search-box">
+                <input type="text" id="u-search" placeholder="Поиск пользователя..." onkeydown="if(event.key==='Enter') search()">
+            </div>
+
+            <div id="contacts" class="contacts-list">
+                </div>
         </aside>
 
         <main class="chat-area">
-            <div id="chat-win" style="display:none; flex:1; flex-direction:column;">
+            
+            <div id="chat-win" style="display:none; flex:1; flex-direction:column; height: 100%;">
                 <header class="chat-header">
-                    <div style="font-weight: bold;" id="chat-with">Username</div>
+                    <div class="user-info">
+                        <b id="chat-with">Username</b>
+                        <span style="display: block; font-size: 12px; color: #40a7e3;">в сети</span>
+                    </div>
+                    <i class="fa-solid fa-ellipsis-vertical" style="color: #708499; cursor: pointer;"></i>
                 </header>
+
                 <div id="messages"></div>
+
                 <form class="input-row" onsubmit="send(); return false;">
-                    <i class="fa-solid fa-paperclip btn-icon" style="color: var(--text-muted);"></i>
-                    <input type="text" id="m-input" placeholder="Write a message..." autocomplete="off">
-                    <button type="submit" class="btn-icon"><i class="fa-solid fa-circle-arrow-up"></i></button>
+                    <i class="fa-regular fa-face-smile btn-icon" style="color: #708499; font-size: 20px; cursor: pointer;"></i>
+                    <input type="text" id="m-input" placeholder="Написать сообщение..." autocomplete="off">
+                    <button type="submit" class="btn-send">
+                        <i class="fa-solid fa-circle-arrow-up"></i>
+                    </button>
                 </form>
             </div>
-            <div id="no-chat" style="flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-muted);">
-                Select a chat to start messaging
+
+            <div id="no-chat" class="empty-state" style="flex:1; display:flex; align-items:center; justify-content:center; color:#708499; text-align: center; padding: 20px;">
+                <div>
+                    <i class="fa-regular fa-comment-dots" style="font-size: 4rem; margin-bottom: 10px; display: block; opacity: 0.3;"></i>
+                    Выберите чат, чтобы начать общение
+                </div>
             </div>
+
         </main>
     </div>
 
