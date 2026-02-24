@@ -9,6 +9,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
+// РАЗДАЧА ФАЙЛОВ ИЗ ПАПКИ PUBLIC
 app.use(express.static(path.join(__dirname, 'public')));
 
 const db = new Client({ 
@@ -19,15 +20,19 @@ const db = new Client({
 async function boot() {
     try {
         await db.connect();
-        await db.query("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, avatar TEXT DEFAULT 'https://cdn-icons-png.flaticon.com/512/149/149071.png')");
+        await db.query("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT)");
         await db.query("CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, sender TEXT, receiver TEXT, content TEXT, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
-        console.log("NEBULA ENGINE STARTED");
-    } catch (e) { console.error(e); }
+        console.log("NEBULA DATABASE: OK");
+    } catch (e) { console.error("DB Error:", e); }
 }
 boot();
 
+// Главная точка входа
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 io.on('connection', (socket) => {
-    // Регистрация
     socket.on('register', async (d) => {
         try {
             const hash = await bcrypt.hash(d.pass, 10);
@@ -36,7 +41,6 @@ io.on('connection', (socket) => {
         } catch (e) { socket.emit('error_msg', 'Ник уже занят'); }
     });
 
-    // Вход
     socket.on('login', async (d) => {
         const res = await db.query("SELECT * FROM users WHERE username = $1", [d.nick]);
         const u = res.rows[0];
@@ -44,7 +48,7 @@ io.on('connection', (socket) => {
             socket.username = u.username;
             socket.join(u.username);
             socket.emit('auth_ok', { nick: u.username });
-        } else { socket.emit('error_msg', 'Ошибка входа'); }
+        } else { socket.emit('error_msg', 'Неверный логин или пароль'); }
     });
 
     socket.on('load_chat', async (d) => {
@@ -60,5 +64,6 @@ io.on('connection', (socket) => {
     });
 });
 
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-server.listen(process.env.PORT || 10000);
+server.listen(process.env.PORT || 10000, '0.0.0.0', () => {
+    console.log('Nebula Server is running on port 10000');
+});
