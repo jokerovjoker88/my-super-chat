@@ -21,22 +21,22 @@ async function boot() {
         await db.connect();
         await db.query("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, avatar TEXT DEFAULT 'https://cdn-icons-png.flaticon.com/512/149/149071.png')");
         await db.query("CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, sender TEXT, receiver TEXT, content TEXT, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
-        console.log("DB ONLINE");
+        console.log("Nebula Engine: Online");
     } catch (e) { console.error(e); }
 }
 boot();
 
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-
 io.on('connection', (socket) => {
     socket.on('login', async (d) => {
-        const res = await db.query("SELECT * FROM users WHERE username = $1", [d.nick]);
-        const u = res.rows[0];
-        if (u && await bcrypt.compare(d.pass, u.password)) {
-            socket.username = u.username;
-            socket.join(u.username);
-            socket.emit('auth_ok', { nick: u.username });
-        }
+        try {
+            const res = await db.query("SELECT * FROM users WHERE username = $1", [d.nick]);
+            const u = res.rows[0];
+            if (u && await bcrypt.compare(d.pass, u.password)) {
+                socket.username = u.username;
+                socket.join(u.username);
+                socket.emit('auth_ok', { nick: u.username });
+            }
+        } catch (e) { console.error(e); }
     });
 
     socket.on('load_chat', async (d) => {
@@ -48,8 +48,10 @@ io.on('connection', (socket) => {
     socket.on('send_msg', async (d) => {
         const sql = "INSERT INTO messages (sender, receiver, content) VALUES ($1, $2, $3) RETURNING to_char(ts, 'HH24:MI') as time";
         const res = await db.query(sql, [d.from, d.to, d.content]);
-        io.to(d.to).to(d.from).emit('new_msg', { ...d, time: res.rows[0].time });
+        const msgData = { ...d, time: res.rows[0].time };
+        io.to(d.to).to(d.from).emit('new_msg', msgData);
     });
 });
 
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 server.listen(process.env.PORT || 10000);
