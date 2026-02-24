@@ -44,11 +44,9 @@ socket.on('chat_history', h => {
 function renderMsg(m) {
     const box = document.getElementById('messages');
     const div = document.createElement('div');
-    const isMe = (m.from === me);
+    const isMe = (m.from === me || m.sender === me);
     div.className = `msg-bubble ${isMe ? 'me' : 'them'}`;
     div.innerHTML = `<span>${m.content}</span><small>${m.time || ''}</small>`;
     box.appendChild(div);
-    box.scrollTop = box.scrollHeight; // Авто-прокрутка вниз
+    box.scrollTop = box.scrollHeight;
 }
-
-socket.on('auth_err', m => alert(m));
