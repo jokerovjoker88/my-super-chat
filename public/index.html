@@ -3,70 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula Messenger</title>
+    <title>Nebula 2.0</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-
-    <div id="auth-screen" class="auth-overlay">
-        <div class="auth-card">
-            <i class="fa-solid fa-paper-plane" style="font-size: 3rem; color: #40a7e3; margin-bottom: 20px;"></i>
-            <h2>NEBULA</h2>
-            <div class="auth-inputs">
-                <input type="text" id="l-nick" placeholder="Имя пользователя" autocomplete="off">
-                <input type="password" id="l-pass" placeholder="Пароль">
-                <button onclick="doLogin()">ВОЙТИ В ЧАТ</button>
-            </div>
-            <p style="color: #708499; font-size: 12px; margin-top: 15px;">Введите любой ник и пароль</p>
+    <div id="auth-screen" class="overlay">
+        <div class="glass-card">
+            <div class="logo">N</div>
+            <h2>Nebula</h2>
+            <input type="text" id="l-nick" placeholder="Username" autocomplete="off">
+            <input type="password" id="l-pass" placeholder="Password">
+            <button onclick="doLogin()">Connect</button>
         </div>
     </div>
 
-    <div id="main-app" class="app" style="display:none">
-        
+    <div id="main-app" class="app-container" style="display:none">
         <aside class="sidebar">
-            <div class="side-header">
-                <span>Nebula</span>
-                <i class="fa-solid fa-pen-to-square" style="font-size: 16px; color: #40a7e3; cursor: pointer;"></i>
+            <div class="sidebar-header">
+                <h3>Chats</h3>
+                <i class="fa-solid fa-gear" onclick="toggleSettings()"></i>
             </div>
-            
-            <div class="search-box">
-                <input type="text" id="u-search" placeholder="Поиск пользователя..." onkeydown="if(event.key==='Enter') search()">
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="u-search" placeholder="Search user..." onkeydown="if(event.key==='Enter') search()">
             </div>
-
-            <div id="contacts" class="contacts-list">
-                </div>
+            <div id="contacts-list" class="contacts"></div>
         </aside>
 
-        <main class="chat-area">
-            
-            <div id="chat-win" style="display:none; flex:1; flex-direction:column; height: 100%;">
-                <header class="chat-header">
-                    <div class="user-info">
-                        <b id="chat-with">Username</b>
-                        <span style="display: block; font-size: 12px; color: #40a7e3;">в сети</span>
-                    </div>
-                    <i class="fa-solid fa-ellipsis-vertical" style="color: #708499; cursor: pointer;"></i>
-                </header>
-
-                <div id="messages"></div>
-
-                <form class="input-row" onsubmit="send(); return false;">
-                    <i class="fa-regular fa-face-smile btn-icon" style="color: #708499; font-size: 20px; cursor: pointer;"></i>
-                    <input type="text" id="m-input" placeholder="Написать сообщение..." autocomplete="off">
-                    <button type="submit" class="btn-send">
-                        <i class="fa-solid fa-circle-arrow-up"></i>
-                    </button>
-                </form>
-            </div>
-
-            <div id="no-chat" class="empty-state" style="flex:1; display:flex; align-items:center; justify-content:center; color:#708499; text-align: center; padding: 20px;">
-                <div>
-                    <i class="fa-regular fa-comment-dots" style="font-size: 4rem; margin-bottom: 10px; display: block; opacity: 0.3;"></i>
-                    Выберите чат, чтобы начать общение
+        <main class="chat-main">
+            <div id="no-chat" class="welcome">
+                <div class="welcome-box">
+                    <i class="fa-regular fa-comments"></i>
+                    <p>Select a user to start messaging</p>
                 </div>
             </div>
 
+            <div id="chat-win" class="chat-window" style="display:none">
+                <header class="chat-header">
+                    <div class="chat-info">
+                        <b id="chat-with">User</b>
+                        <span>Online</span>
+                    </div>
+                </header>
+                <div id="messages" class="messages-container"></div>
+                <form class="input-area" onsubmit="send(); return false;">
+                    <input type="text" id="m-input" placeholder="Write a message..." autocomplete="off">
+                    <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+            </div>
         </main>
     </div>
 
