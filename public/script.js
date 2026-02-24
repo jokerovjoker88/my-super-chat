@@ -2,11 +2,9 @@ const socket = io();
 let me = "", target = "";
 
 function doLogin() {
-    socket.emit('login', { nick: document.getElementById('l-nick').value, pass: document.getElementById('l-pass').value });
-}
-
-function doReg() {
-    socket.emit('register', { nick: document.getElementById('r-nick').value, email: document.getElementById('r-email').value, pass: document.getElementById('r-pass').value });
+    const nick = document.getElementById('l-nick').value;
+    const pass = document.getElementById('l-pass').value;
+    if(nick && pass) socket.emit('login', { nick, pass });
 }
 
 socket.on('auth_ok', d => {
@@ -18,21 +16,18 @@ socket.on('auth_ok', d => {
 
 function search() {
     const val = document.getElementById('u-search').value;
-    if(val) socket.emit('search_user', val);
+    if(val) {
+        target = val;
+        document.getElementById('chat-win').style.display = 'flex';
+        document.getElementById('chat-with').innerText = target;
+        socket.emit('load_chat', { me, him: target });
+    }
 }
-
-socket.on('user_found', u => {
-    target = u.username;
-    document.getElementById('chat-win').style.display = 'flex';
-    document.getElementById('chat-with').innerText = target;
-    socket.emit('load_chat', { me, him: target });
-});
 
 function send() {
     const input = document.getElementById('m-input');
-    const msg = input.value.trim();
-    if(msg && target) {
-        socket.emit('send_msg', { from: me, to: target, content: msg, type: 'text' });
+    if(input.value.trim() && target) {
+        socket.emit('send_msg', { from: me, to: target, content: input.value, type: 'text' });
         input.value = '';
     }
 }
@@ -42,8 +37,7 @@ socket.on('new_msg', d => {
 });
 
 socket.on('chat_history', h => {
-    const box = document.getElementById('messages');
-    box.innerHTML = '';
+    document.getElementById('messages').innerHTML = '';
     h.forEach(renderMsg);
 });
 
@@ -56,6 +50,3 @@ function renderMsg(m) {
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
 }
-
-socket.on('auth_error', m => alert(m));
-socket.on('auth_success', () => alert("Успешно!"));
