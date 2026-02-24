@@ -9,8 +9,11 @@ function doLogin() {
 
 socket.on('auth_ok', d => {
     me = d.nick;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'flex';
+    document.getElementById('auth-screen').style.opacity = '0';
+    setTimeout(() => {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'flex';
+    }, 300);
 });
 
 function search() {
@@ -26,9 +29,11 @@ function search() {
 
 function send() {
     const input = document.getElementById('m-input');
-    if(input.value.trim() && target) {
-        socket.emit('send_msg', { from: me, to: target, content: input.value });
+    const content = input.value.trim();
+    if(content && target) {
+        socket.emit('send_msg', { from: me, to: target, content });
         input.value = '';
+        input.focus();
     }
 }
 
@@ -37,16 +42,17 @@ socket.on('new_msg', d => {
 });
 
 socket.on('chat_history', h => {
-    document.getElementById('messages').innerHTML = '';
+    const box = document.getElementById('messages');
+    box.innerHTML = '';
     h.forEach(renderMsg);
 });
 
 function renderMsg(m) {
     const box = document.getElementById('messages');
     const div = document.createElement('div');
-    const isMe = (m.from === me || m.sender === me);
+    const isMe = (m.from === me);
     div.className = `msg-bubble ${isMe ? 'me' : 'them'}`;
-    div.innerHTML = `<span>${m.content}</span><small>${m.time || ''}</small>`;
+    div.innerHTML = `${m.content}<small>${m.time || ''}</small>`;
     box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
+    box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
 }
