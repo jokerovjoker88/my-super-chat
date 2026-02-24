@@ -1,64 +1,58 @@
 :root {
-    --bg: #0f172a;
-    --glass: rgba(30, 41, 59, 0.7);
-    --accent: #38bdf8;
-    --msg-me: #0369a1;
-    --msg-them: #1e293b;
-    --text: #f8fafc;
-    /* Твои обои чата */
-    --chat-bg: url('https://w.wallhaven.cc/full/8o/wallhaven-8o9m6j.jpg');
+    --deep: #050a14;
+    --neon: #00f2ff;
+    --violet: #7000ff;
+    --bg-chat: url('https://w.wallhaven.cc/full/pk/wallhaven-pk93m9.jpg');
 }
 
 body {
-    margin: 0; font-family: 'Inter', sans-serif;
-    background: var(--bg); color: var(--text); height: 100vh;
+    margin: 0; font-family: 'Orbitron', sans-serif;
+    background: var(--deep); color: white; height: 100vh; overflow: hidden;
 }
 
 .overlay {
-    position: fixed; inset: 0; background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
-    display: flex; align-items: center; justify-content: center; z-index: 100;
+    position: fixed; inset: 0; background: radial-gradient(circle, #0b1426 0%, #050a14 100%);
+    display: flex; align-items: center; justify-content: center; z-index: 1000;
 }
 
-.glass-card {
-    background: var(--glass); backdrop-filter: blur(10px);
-    padding: 40px; border-radius: 24px; text-align: center; width: 320px;
-    border: 1px solid rgba(255,255,255,0.1);
+.auth-box {
+    background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 20px;
+    border: 1px solid var(--neon); box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+    text-align: center; width: 300px;
 }
 
-.logo {
-    width: 60px; height: 60px; background: var(--accent); margin: 0 auto 20px;
-    border-radius: 18px; line-height: 60px; font-size: 30px; font-weight: bold;
+.glow-text { text-shadow: 0 0 10px var(--neon); letter-spacing: 5px; }
+
+input {
+    width: 100%; padding: 12px; margin: 10px 0; background: rgba(0,0,0,0.5);
+    border: 1px solid #333; color: white; border-radius: 8px; outline: none; box-sizing: border-box;
 }
 
-.app-container { display: flex; height: 100vh; width: 100vw; }
+input:focus { border-color: var(--neon); }
 
-.sidebar { width: 320px; background: #1e293b; display: flex; flex-direction: column; border-right: 1px solid #334155; }
+.primary-btn { width: 100%; padding: 12px; background: var(--neon); border: none; font-weight: bold; cursor: pointer; border-radius: 8px; }
+.secondary-btn { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--violet); color: white; margin-top: 10px; cursor: pointer; border-radius: 8px; }
 
-.search-bar { 
-    margin: 15px; background: #0f172a; padding: 10px 15px; 
-    border-radius: 12px; display: flex; align-items: center; gap: 10px;
-}
+.app { display: flex; height: 100vh; }
 
-.search-bar input { background: transparent; border: none; color: white; outline: none; width: 100%; }
+.sidebar { width: 300px; background: #0b1426; border-right: 1px solid #1a2a44; display: flex; flex-direction: column; }
+.side-head { padding: 20px; font-weight: bold; color: var(--neon); border-bottom: 1px solid #1a2a44; }
 
-.chat-main { flex: 1; display: flex; flex-direction: column; position: relative; }
+.search-area { padding: 15px; position: relative; }
+.search-area i { position: absolute; right: 25px; top: 25px; color: var(--neon); cursor: pointer; }
 
-/* Обои чата */
-.messages-container {
-    flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px;
-    background: var(--chat-bg); background-size: cover; background-attachment: fixed;
-}
+.chat-main { flex: 1; display: flex; flex-direction: column; background: var(--bg-chat); background-size: cover; background-position: center; }
+
+#messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 8px; background: rgba(5, 10, 20, 0.7); }
 
 .msg-bubble {
-    max-width: 65%; padding: 10px 16px; border-radius: 18px; font-size: 15px;
-    backdrop-filter: blur(5px); box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    max-width: 70%; padding: 10px 15px; border-radius: 15px; font-size: 14px;
+    backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1);
 }
 
-.msg-bubble.me { align-self: flex-end; background: var(--msg-me); border-bottom-right-radius: 4px; }
-.msg-bubble.them { align-self: flex-start; background: var(--msg-them); border-bottom-left-radius: 4px; }
+.msg-bubble.me { align-self: flex-end; background: var(--violet); border-bottom-right-radius: 2px; }
+.msg-bubble.them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 2px; }
 
-.msg-bubble small { display: block; font-size: 10px; opacity: 0.6; margin-top: 5px; text-align: right; }
-
-.input-area { padding: 20px; background: #1e293b; display: flex; gap: 15px; }
-.input-area input { flex: 1; background: #0f172a; border: none; padding: 12px 20px; border-radius: 12px; color: white; outline: none; }
-.input-area button { background: var(--accent); border: none; width: 45px; border-radius: 12px; color: #0f172a; cursor: pointer; }
+.input-box { padding: 20px; background: rgba(11, 20, 38, 0.9); display: flex; gap: 10px; }
+.input-box input { flex: 1; margin: 0; }
+.input-box button { background: var(--neon); border: none; width: 50px; border-radius: 8px; cursor: pointer; }
