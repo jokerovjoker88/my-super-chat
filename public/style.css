@@ -1,88 +1,64 @@
 :root {
-    --bg-main: #0e1621;
-    --bg-side: #17212b;
-    --accent: #2b5278;
-    --accent-light: #40a7e3;
-    --msg-in: #182533;
-    --msg-out: #2b5278;
-    --text: #f5f5f5;
-    --text-dim: #708499;
+    --bg: #0f172a;
+    --glass: rgba(30, 41, 59, 0.7);
+    --accent: #38bdf8;
+    --msg-me: #0369a1;
+    --msg-them: #1e293b;
+    --text: #f8fafc;
+    /* Твои обои чата */
+    --chat-bg: url('https://w.wallhaven.cc/full/8o/wallhaven-8o9m6j.jpg');
 }
 
 body {
-    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg-main); color: var(--text); height: 100vh; display: flex;
+    margin: 0; font-family: 'Inter', sans-serif;
+    background: var(--bg); color: var(--text); height: 100vh;
 }
 
-.app { display: flex; width: 100%; height: 100vh; }
-
-/* Боковая панель */
-.sidebar {
-    width: 300px; background: var(--bg-side); border-right: 1px solid #000;
-    display: flex; flex-direction: column;
+.overlay {
+    position: fixed; inset: 0; background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+    display: flex; align-items: center; justify-content: center; z-index: 100;
 }
 
-.side-header { padding: 15px; font-weight: bold; font-size: 18px; border-bottom: 1px solid #0e1621; }
-
-.search-box { padding: 10px; }
-.search-box input {
-    width: 100%; padding: 8px 12px; border-radius: 20px; border: none;
-    background: #242f3d; color: white; outline: none; box-sizing: border-box;
+.glass-card {
+    background: var(--glass); backdrop-filter: blur(10px);
+    padding: 40px; border-radius: 24px; text-align: center; width: 320px;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* Окно чата */
-.chat-area { flex: 1; display: flex; flex-direction: column; position: relative; }
-
-.chat-header {
-    padding: 10px 20px; background: var(--bg-side); 
-    display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3); z-index: 10;
+.logo {
+    width: 60px; height: 60px; background: var(--accent); margin: 0 auto 20px;
+    border-radius: 18px; line-height: 60px; font-size: 30px; font-weight: bold;
 }
 
-#messages {
-    flex: 1; overflow-y: auto; padding: 20px;
-    display: flex; flex-direction: column; gap: 4px;
-    background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-    background-blend-mode: overlay; background-color: var(--bg-main);
+.app-container { display: flex; height: 100vh; width: 100vw; }
+
+.sidebar { width: 320px; background: #1e293b; display: flex; flex-direction: column; border-right: 1px solid #334155; }
+
+.search-bar { 
+    margin: 15px; background: #0f172a; padding: 10px 15px; 
+    border-radius: 12px; display: flex; align-items: center; gap: 10px;
 }
 
-/* Баблы сообщений */
+.search-bar input { background: transparent; border: none; color: white; outline: none; width: 100%; }
+
+.chat-main { flex: 1; display: flex; flex-direction: column; position: relative; }
+
+/* Обои чата */
+.messages-container {
+    flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px;
+    background: var(--chat-bg); background-size: cover; background-attachment: fixed;
+}
+
 .msg-bubble {
-    max-width: 75%; padding: 8px 12px; border-radius: 12px;
-    position: relative; font-size: 15px; animation: fadeIn 0.2s ease;
+    max-width: 65%; padding: 10px 16px; border-radius: 18px; font-size: 15px;
+    backdrop-filter: blur(5px); box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.msg-bubble.me { align-self: flex-end; background: var(--msg-me); border-bottom-right-radius: 4px; }
+.msg-bubble.them { align-self: flex-start; background: var(--msg-them); border-bottom-left-radius: 4px; }
 
-.msg-bubble.me {
-    align-self: flex-end; background: var(--msg-out);
-    border-bottom-right-radius: 4px; color: white;
-}
+.msg-bubble small { display: block; font-size: 10px; opacity: 0.6; margin-top: 5px; text-align: right; }
 
-.msg-bubble.them {
-    align-self: flex-start; background: var(--msg-in);
-    border-bottom-left-radius: 4px;
-}
-
-.msg-info {
-    display: flex; align-items: center; justify-content: flex-end;
-    gap: 4px; margin-top: 4px; font-size: 11px; color: var(--text-dim);
-}
-
-/* Поле ввода */
-.input-row {
-    padding: 10px 15px; background: var(--bg-side);
-    display: flex; align-items: center; gap: 10px;
-}
-
-.input-row input {
-    flex: 1; padding: 10px 15px; border-radius: 20px; border: none;
-    background: #242f3d; color: white; outline: none;
-}
-
-.btn-send {
-    background: none; border: none; color: var(--accent-light);
-    font-size: 22px; cursor: pointer; transition: 0.2s;
-}
-
-.btn-send:hover { transform: scale(1.1); }
+.input-area { padding: 20px; background: #1e293b; display: flex; gap: 15px; }
+.input-area input { flex: 1; background: #0f172a; border: none; padding: 12px 20px; border-radius: 12px; color: white; outline: none; }
+.input-area button { background: var(--accent); border: none; width: 45px; border-radius: 12px; color: #0f172a; cursor: pointer; }
