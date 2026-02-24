@@ -2,39 +2,49 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Nebula Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula Messenger</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div id="auth-screen" class="auth-overlay">
         <div class="auth-card">
-            <h1>NEBULA</h1>
-            <input type="text" id="l-nick" placeholder="Никнейм">
-            <input type="password" id="l-pass" placeholder="Пароль">
-            <button onclick="doLogin()">Войти</button>
+            <i class="fa-solid fa-paper-plane" style="font-size:3rem; color:var(--light-blue); margin-bottom:20px;"></i>
+            <h2>NEBULA</h2>
+            <input type="text" id="l-nick" placeholder="Username">
+            <input type="password" id="l-pass" placeholder="Password">
+            <button onclick="doLogin()">START MESSAGING</button>
         </div>
     </div>
 
     <div id="main-app" class="app" style="display:none">
         <aside class="sidebar">
-            <div class="side-header"><span id="my-name"></span></div>
+            <div class="side-header">Nebula</div>
             <div class="search-box">
-                <input type="text" id="u-search" placeholder="Поиск ника...">
-                <button onclick="search()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                <input type="text" id="u-search" placeholder="Search users..." onkeydown="if(event.key==='Enter') search()">
             </div>
+            <div id="contacts" style="overflow-y: auto;"></div>
         </aside>
+
         <main class="chat-area">
             <div id="chat-win" style="display:none; flex:1; flex-direction:column;">
-                <header class="chat-header"><b id="chat-with"></b></header>
+                <header class="chat-header">
+                    <div style="font-weight: bold;" id="chat-with">Username</div>
+                </header>
                 <div id="messages"></div>
                 <form class="input-row" onsubmit="send(); return false;">
-                    <input type="text" id="m-input" placeholder="Сообщение..." autocomplete="off">
-                    <button type="submit" class="btn-icon"><i class="fa-solid fa-paper-plane"></i></button>
+                    <i class="fa-solid fa-paperclip btn-icon" style="color: var(--text-muted);"></i>
+                    <input type="text" id="m-input" placeholder="Write a message..." autocomplete="off">
+                    <button type="submit" class="btn-icon"><i class="fa-solid fa-circle-arrow-up"></i></button>
                 </form>
+            </div>
+            <div id="no-chat" style="flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-muted);">
+                Select a chat to start messaging
             </div>
         </main>
     </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
