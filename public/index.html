@@ -8,22 +8,20 @@
 </head>
 <body>
     <div id="auth-screen" class="auth-overlay">
-        <div class="auth-card">
+        <div class="auth-card" id="login-form">
             <h1>NEBULA</h1>
             <input type="text" id="l-nick" placeholder="Никнейм">
             <input type="password" id="l-pass" placeholder="Пароль">
             <button onclick="doLogin()">Войти</button>
-            <p onclick="toggleAuth(true)" style="cursor:pointer; color:#40a7e3; margin-top:10px;">Регистрация</p>
+            <p onclick="toggleAuth(true)" style="cursor:pointer; color:#40a7e3; margin-top:10px;">Создать аккаунт</p>
         </div>
-        <div id="reg-form" class="auth-overlay" style="display:none; z-index:1001;">
-            <div class="auth-card">
-                <h1>JOIN</h1>
-                <input type="text" id="r-nick" placeholder="Ник">
-                <input type="email" id="r-email" placeholder="Email">
-                <input type="password" id="r-pass" placeholder="Пароль">
-                <button onclick="doReg()">Создать</button>
-                <p onclick="toggleAuth(false)" style="cursor:pointer">Назад</p>
-            </div>
+        <div class="auth-card" id="reg-form" style="display:none">
+            <h1>JOIN</h1>
+            <input type="text" id="r-nick" placeholder="Ник">
+            <input type="email" id="r-email" placeholder="Email">
+            <input type="password" id="r-pass" placeholder="Пароль">
+            <button onclick="doReg()">Зарегистрироваться</button>
+            <p onclick="toggleAuth(false)" style="cursor:pointer">Назад</p>
         </div>
     </div>
 
@@ -31,9 +29,9 @@
         <aside class="sidebar">
             <div class="side-header"><img id="my-avatar" class="avatar-min"><span id="my-name"></span></div>
             <form class="search-box" onsubmit="search(); return false;">
-                <input type="text" id="u-search" placeholder="Поиск ника...">
+                <input type="text" id="u-search" placeholder="Поиск ника..." autocomplete="off">
             </form>
-            <div id="contacts"></div>
+            <div id="contacts" class="contacts-list"></div>
         </aside>
         <main class="chat-area">
             <div id="no-chat" class="empty-view">Выберите чат</div>
