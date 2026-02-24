@@ -2,14 +2,12 @@ const socket = io();
 let me = "", target = "";
 
 function auth(type) {
-    const nick = document.getElementById('nick').value;
-    const pass = document.getElementById('pass').value;
+    const nick = document.getElementById('nick').value.trim();
+    const pass = document.getElementById('pass').value.trim();
     if(nick && pass) socket.emit(type, { nick, pass });
 }
 
 socket.on('reg_success', () => alert("Registered! Now Login."));
-socket.on('error_msg', m => alert(m));
-
 socket.on('auth_ok', d => {
     me = d.nick;
     document.getElementById('auth-screen').style.display = 'none';
@@ -47,8 +45,9 @@ socket.on('chat_history', h => {
 function renderMsg(m) {
     const box = document.getElementById('messages');
     const div = document.createElement('div');
-    div.className = `msg-bubble ${m.from === me ? 'me' : 'them'}`;
-    div.innerHTML = `${m.content}<small style="display:block;font-size:10px;opacity:0.6;margin-top:5px;">${m.time || ''}</small>`;
+    const isMe = (m.from === me || m.sender === me);
+    div.className = `msg ${isMe ? 'me' : 'them'}`;
+    div.innerHTML = `${m.content} <span class="time">${m.time || ''}</span>`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
 }
