@@ -2,9 +2,7 @@ const socket = io();
 let me = "", target = "";
 
 function doLogin() {
-    const nick = document.getElementById('l-nick').value;
-    const pass = document.getElementById('l-pass').value;
-    if(nick && pass) socket.emit('login', { nick, pass });
+    socket.emit('login', { nick: document.getElementById('l-nick').value, pass: document.getElementById('l-pass').value });
 }
 
 socket.on('auth_ok', d => {
@@ -26,9 +24,8 @@ function search() {
 
 function send() {
     const input = document.getElementById('m-input');
-    const msg = input.value.trim();
-    if(msg && target) {
-        socket.emit('send_msg', { from: me, to: target, content: msg, type: 'text' });
+    if(input.value.trim() && target) {
+        socket.emit('send_msg', { from: me, to: target, content: input.value });
         input.value = '';
     }
 }
@@ -45,11 +42,8 @@ socket.on('chat_history', h => {
 function renderMsg(m) {
     const box = document.getElementById('messages');
     const div = document.createElement('div');
-    const isMe = (m.from === me || m.sender === me);
-    div.className = `msg-bubble ${isMe ? 'me' : 'them'}`;
+    div.className = `msg-bubble ${(m.from === me) ? 'me' : 'them'}`;
     div.innerHTML = `<span>${m.content}</span><small>${m.time || ''}</small>`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
 }
-
-socket.on('auth_error', m => alert(m));
