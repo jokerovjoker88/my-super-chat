@@ -4,6 +4,7 @@ let me = "", target = "";
 function doLogin() {
     socket.emit('login', { nick: document.getElementById('l-nick').value, pass: document.getElementById('l-pass').value });
 }
+
 function doReg() {
     socket.emit('register', { nick: document.getElementById('r-nick').value, email: document.getElementById('r-email').value, pass: document.getElementById('r-pass').value });
 }
@@ -29,27 +30,32 @@ socket.on('user_found', u => {
 
 function send() {
     const input = document.getElementById('m-input');
-    if(input.value.trim() && target) {
-        socket.emit('send_msg', { from: me, to: target, content: input.value, type: 'text' });
+    const msg = input.value.trim();
+    if(msg && target) {
+        socket.emit('send_msg', { from: me, to: target, content: msg, type: 'text' });
         input.value = '';
-        input.focus();
     }
 }
 
-socket.on('new_msg', d => { if(d.from === target || d.to === target) renderMsg(d); });
+socket.on('new_msg', d => {
+    if(d.from === target || d.to === target) renderMsg(d);
+});
+
 socket.on('chat_history', h => {
-    document.getElementById('messages').innerHTML = '';
+    const box = document.getElementById('messages');
+    box.innerHTML = '';
     h.forEach(renderMsg);
 });
 
 function renderMsg(m) {
     const box = document.getElementById('messages');
     const div = document.createElement('div');
-    div.className = `msg-bubble ${(m.from === me) ? 'me' : 'them'}`;
+    const isMe = (m.from === me || m.sender === me);
+    div.className = `msg-bubble ${isMe ? 'me' : 'them'}`;
     div.innerHTML = `<span>${m.content}</span><small>${m.time || ''}</small>`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
 }
 
 socket.on('auth_error', m => alert(m));
-socket.on('auth_success', () => alert("Ок, входи!"));
+socket.on('auth_success', () => alert("Успешно!"));
