@@ -9,7 +9,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// РАЗДАЧА ФАЙЛОВ ИЗ ПАПКИ PUBLIC
 app.use(express.static(path.join(__dirname, 'public')));
 
 const db = new Client({ 
@@ -20,35 +19,52 @@ const db = new Client({
 async function boot() {
     try {
         await db.connect();
-        await db.query("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT)");
-        await db.query("CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, sender TEXT, receiver TEXT, content TEXT, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
-        console.log("NEBULA DATABASE: OK");
-    } catch (e) { console.error("DB Error:", e); }
+        console.log("Connected to PostgreSQL");
+        // Создаем таблицы, если их нет
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                username TEXT PRIMARY KEY, 
+                password TEXT
+            );
+            CREATE TABLE IF NOT EXISTS messages (
+                id SERIAL PRIMARY KEY, 
+                sender TEXT, 
+                receiver TEXT, 
+                content TEXT, 
+                ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log("Tables validated. NEBULA READY.");
+    } catch (e) { console.error("Initialization Error:", e); }
 }
 boot();
 
-// Главная точка входа
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 io.on('connection', (socket) => {
+    // РЕГИСТРАЦИЯ
     socket.on('register', async (d) => {
         try {
             const hash = await bcrypt.hash(d.pass, 10);
             await db.query("INSERT INTO users (username, password) VALUES ($1, $2)", [d.nick, hash]);
             socket.emit('reg_success');
-        } catch (e) { socket.emit('error_msg', 'Ник уже занят'); }
+            console.log(`New user: ${d.nick}`);
+        } catch (e) { 
+            socket.emit('error_msg', 'Ник занят или ошибка БД'); 
+        }
     });
 
+    // ВХОД
     socket.on('login', async (d) => {
-        const res = await db.query("SELECT * FROM users WHERE username = $1", [d.nick]);
-        const u = res.rows[0];
-        if (u && await bcrypt.compare(d.pass, u.password)) {
-            socket.username = u.username;
-            socket.join(u.username);
-            socket.emit('auth_ok', { nick: u.username });
-        } else { socket.emit('error_msg', 'Неверный логин или пароль'); }
+        try {
+            const res = await db.query("SELECT * FROM users WHERE username = $1", [d.nick]);
+            const u = res.rows[0];
+            if (u && await bcrypt.compare(d.pass, u.password)) {
+                socket.username = u.username;
+                socket.join(u.username);
+                socket.emit('auth_ok', { nick: u.username });
+            } else { socket.emit('error_msg', 'Неверный логин или пароль'); }
+        } catch (e) { socket.emit('error_msg', 'Ошибка сервера'); }
     });
 
     socket.on('load_chat', async (d) => {
@@ -64,6 +80,4 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(process.env.PORT || 10000, '0.0.0.0', () => {
-    console.log('Nebula Server is running on port 10000');
-});
+server.listen(process.env.PORT || 10000, '0.0.0.0');
