@@ -5,10 +5,9 @@ function auth(type) {
     const nick = document.getElementById('nick').value.trim();
     const pass = document.getElementById('pass').value.trim();
     if(nick && pass) socket.emit(type, { nick, pass });
-    else alert("Please fill all fields");
 }
 
-socket.on('reg_success', () => alert("Account created! Now you can Login."));
+socket.on('reg_success', () => alert("Аккаунт создан! Теперь войдите."));
 socket.on('error_msg', m => alert(m));
 
 socket.on('auth_ok', d => {
@@ -18,12 +17,11 @@ socket.on('auth_ok', d => {
 });
 
 function search() {
-    const val = document.getElementById('u-search').value.trim();
-    if(val) {
-        target = val;
+    target = document.getElementById('u-search').value.trim();
+    if(target) {
         document.getElementById('welcome').style.display = 'none';
         document.getElementById('chat-win').style.display = 'flex';
-        document.getElementById('chat-with').innerText = target;
+        document.getElementById('chat-with').innerText = `Chat with: ${target}`;
         socket.emit('load_chat', { me, him: target });
     }
 }
@@ -41,8 +39,7 @@ socket.on('new_msg', d => {
 });
 
 socket.on('chat_history', h => {
-    const box = document.getElementById('messages');
-    box.innerHTML = '';
+    document.getElementById('messages').innerHTML = '';
     h.forEach(renderMsg);
 });
 
@@ -51,7 +48,7 @@ function renderMsg(m) {
     const div = document.createElement('div');
     const isMe = (m.from === me || m.sender === me);
     div.className = `msg ${isMe ? 'me' : 'them'}`;
-    div.innerHTML = `${m.content} <span class="time">${m.time || ''}</span>`;
+    div.innerHTML = `${m.content} <span style="font-size:10px; opacity:0.5; float:right; margin-top:5px;">${m.time || ''}</span>`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
 }
