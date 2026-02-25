@@ -9,7 +9,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-app.use(express.static(path.join(__dirname, 'public')));
+// Используем path.join для надежности путей
+const publicPath = path.join(__dirname, 'public');
+app.use(express.static(publicPath));
 
 const db = new Client({ 
     connectionString: process.env.DATABASE_URL, 
@@ -19,42 +21,29 @@ const db = new Client({
 async function boot() {
     try {
         await db.connect();
-        console.log("Connected to PostgreSQL");
-        // Создаем таблицы, если их нет
         await db.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                username TEXT PRIMARY KEY, 
-                password TEXT
-            );
-            CREATE TABLE IF NOT EXISTS messages (
-                id SERIAL PRIMARY KEY, 
-                sender TEXT, 
-                receiver TEXT, 
-                content TEXT, 
-                ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
+            CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT);
+            CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, sender TEXT, receiver TEXT, content TEXT, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
         `);
-        console.log("Tables validated. NEBULA READY.");
-    } catch (e) { console.error("Initialization Error:", e); }
+        console.log("DATABASE READY");
+    } catch (e) { console.error("DB ERROR:", e); }
 }
 boot();
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+// Явный маршрут для главной страницы
+app.get('/', (req, res) => {
+    res.sendFile(path.join(publicPath, 'index.html'));
+});
 
 io.on('connection', (socket) => {
-    // РЕГИСТРАЦИЯ
     socket.on('register', async (d) => {
         try {
-            const hash = await bcrypt.hash(d.pass, 10);
-            await db.query("INSERT INTO users (username, password) VALUES ($1, $2)", [d.nick, hash]);
+            const h = await bcrypt.hash(d.pass, 10);
+            await db.query("INSERT INTO users (username, password) VALUES ($1, $2)", [d.nick, h]);
             socket.emit('reg_success');
-            console.log(`New user: ${d.nick}`);
-        } catch (e) { 
-            socket.emit('error_msg', 'Ник занят или ошибка БД'); 
-        }
+        } catch (e) { socket.emit('error_msg', 'Ник занят'); }
     });
 
-    // ВХОД
     socket.on('login', async (d) => {
         try {
             const res = await db.query("SELECT * FROM users WHERE username = $1", [d.nick]);
@@ -63,19 +52,17 @@ io.on('connection', (socket) => {
                 socket.username = u.username;
                 socket.join(u.username);
                 socket.emit('auth_ok', { nick: u.username });
-            } else { socket.emit('error_msg', 'Неверный логин или пароль'); }
-        } catch (e) { socket.emit('error_msg', 'Ошибка сервера'); }
+            } else socket.emit('error_msg', 'Неверный логин');
+        } catch (e) { socket.emit('error_msg', 'Ошибка входа'); }
     });
 
     socket.on('load_chat', async (d) => {
-        const sql = "SELECT sender as from, content, to_char(ts, 'HH24:MI') as time FROM messages WHERE (sender=$1 AND receiver=$2) OR (sender=$2 AND receiver=$1) ORDER BY ts ASC";
-        const res = await db.query(sql, [d.me, d.him]);
+        const res = await db.query("SELECT sender as from, content, to_char(ts, 'HH24:MI') as time FROM messages WHERE (sender=$1 AND receiver=$2) OR (sender=$2 AND receiver=$1) ORDER BY ts ASC", [d.me, d.him]);
         socket.emit('chat_history', res.rows);
     });
 
     socket.on('send_msg', async (d) => {
-        const sql = "INSERT INTO messages (sender, receiver, content) VALUES ($1, $2, $3) RETURNING to_char(ts, 'HH24:MI') as time";
-        const res = await db.query(sql, [d.from, d.to, d.content]);
+        const res = await db.query("INSERT INTO messages (sender, receiver, content) VALUES ($1, $2, $3) RETURNING to_char(ts, 'HH24:MI') as time", [d.from, d.to, d.content]);
         io.to(d.to).to(d.from).emit('new_msg', { ...d, time: res.rows[0].time });
     });
 });
