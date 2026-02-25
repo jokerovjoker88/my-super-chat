@@ -17,11 +17,12 @@ socket.on('auth_ok', d => {
 });
 
 function search() {
-    target = document.getElementById('u-search').value.trim();
-    if(target) {
+    const val = document.getElementById('u-search').value.trim();
+    if(val) {
+        target = val;
         document.getElementById('welcome').style.display = 'none';
         document.getElementById('chat-win').style.display = 'flex';
-        document.getElementById('chat-with').innerText = `Chat with: ${target}`;
+        document.getElementById('chat-with').innerText = target;
         socket.emit('load_chat', { me, him: target });
     }
 }
@@ -48,7 +49,7 @@ function renderMsg(m) {
     const div = document.createElement('div');
     const isMe = (m.from === me || m.sender === me);
     div.className = `msg ${isMe ? 'me' : 'them'}`;
-    div.innerHTML = `${m.content} <span style="font-size:10px; opacity:0.5; float:right; margin-top:5px;">${m.time || ''}</span>`;
+    div.innerHTML = `${m.content} <br><small style="font-size:10px; opacity:0.5; float:right;">${m.time || ''}</small>`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
 }
